@@ -133,7 +133,10 @@
 				<details>
 					<summary>technical details about how these examples work</summary>
 					<p>
-						Each of the following examples mounts a Svelte component named <code>Markdown</code>
+						Each of the following examples mounts a Svelte component named <a
+							href="https://github.com/ryanatkn/end-user-markdown-sketch/blob/main/src/lib/Markdown.svelte"
+							><code>Markdown</code></a
+						>
 						with a
 						<code>content</code> prop:
 					</p>
@@ -142,15 +145,25 @@
 						<div><Markdown content="hey @you" /></div>
 					</blockquote>
 					<p>
-						The <code>Markdown</code> component internally calls <code>parse_markdown</code> to
-						transform
+						The <code>Markdown</code> component internally calls
+						<a
+							href="https://github.com/ryanatkn/end-user-markdown-sketch/blob/main/src/lib/parse_markdown.ts"
+							><code>parse_markdown</code></a
+						>
+						to transform
 						<code>content</code> to its JSON representation, an
-						<a href="https://github.com/estree/estree">ESTree</a>-compliant AST. (and then some
-						hacky post-processing to demo more features)
+						<a href="https://github.com/estree/estree">ESTree</a>-compliant AST. (and then
+						<a
+							href="https://github.com/ryanatkn/end-user-markdown-sketch/blob/main/src/lib/todo_hacky_parse.ts"
+							>some hacky post-processing</a
+						> to demo more features)
 					</p>
 					<p>
 						The @ symbol in <code>"hey @you"</code> is interpreted as a shorthand for a
-						<code>Mention</code>
+						<a
+							href="https://github.com/ryanatkn/end-user-markdown-sketch/blob/main/src/routes/Mention.svelte"
+							><code>Mention</code></a
+						>
 						component. The text
 						<code>"@you"</code> is equivalent to to <Code
 							content={`<Mention name="you" />`}
@@ -159,7 +172,9 @@
 					</p>
 					<p>
 						The prefixes should be customizable to enable app-specific custom features, which would
-						potentially be user-definable. <a href="#extensibility">The extensibility section</a> elaborates.
+						potentially be defined or customized by end-users. <a href="#extensibility"
+							>The extensibility section</a
+						> elaborates.
 					</p>
 				</details>
 			</section>
