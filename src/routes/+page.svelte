@@ -47,7 +47,7 @@
 					There are many markdowns. This project describes a proposed flavor of markdown designed
 					for the end-users and developers of an unannounced social app framework. My goal is to
 					provide these capabilities to end-users, not make a new flavor, and I would
-					enthusiastically use an existing library if it provided the desired features and runtime
+					enthusiastically use an existing library if it had the desired features and runtime
 					characteristics.
 				</p>
 				<aside>
@@ -99,7 +99,8 @@
 					open-ended usecase-specific features, not make a universal markdown.
 				</p>
 				<p>
-					For example, the asterisks for <code>*bold text*</code> are an extension behavior, and its
+					For example, the asterisks for <code>*bold text*</code> are an optional extension
+					behavior, and its
 					<code>&lt;strong&gt;</code> wrapper is configurable. It could be different HTML or a Svelte
 					component.
 				</p>
@@ -159,22 +160,22 @@
 						> to demo more features)
 					</p>
 					<p>
-						The @ symbol in <code>"hey @you"</code> is interpreted as a shorthand for a
+						The @ symbol in <code>hey @you</code> is configured to be interpreted as a shorthand for
+						a
 						<a
 							href="https://github.com/ryanatkn/end-user-markdown-sketch/blob/main/src/routes/Mention.svelte"
 							><code>Mention</code></a
 						>
 						component. The text
-						<code>"@you"</code> is equivalent to to <Code
+						<code>@you</code> is equivalent to <Code
 							content={`<Mention name="you" />`}
 							pre_attrs={{style: 'display: inline'}}
-						/>.
+						/>. The component is provided by the app and can be anything.
 					</p>
 					<p>
-						The prefixes should be customizable to enable app-specific custom features, which would
-						potentially be defined or customized by end-users. <a href="#extensibility"
-							>The extensibility section</a
-						> elaborates.
+						The control characters like @ are customizable to enable app-specific features, and they
+						could potentially be defined or customized by end-users. (like the people using a chat
+						app) <a href="#extensibility">The extensibility section</a> elaborates.
 					</p>
 				</details>
 			</section>
@@ -188,8 +189,8 @@
 			<section class="section_lg">
 				<h3 id="html_attributes">HTML attributes</h3>
 				<p>
-					A safe subset of HTML attributes is supported. This is security-sensitive, and some
-					contexts need to disallow styles that break the UX.
+					A safe subset of HTML attributes is supported. Some attributes are security- and
+					privacy-sensitive, and some contexts need to disallow styles that break the UX.
 				</p>
 				<blockquote style:display="flex" class="wrap">
 					<code style:background-color="var(--bg_4)">ALLOWED_HTML_ATTRS</code> = {#each ALLOWED_HTML_ATTRS as attr, i}<code
@@ -197,9 +198,10 @@
 						>{#if i !== ALLOWED_HTML_ATTRS.size - 1},&nbsp;{/if}{/each}
 				</blockquote>
 				<p>
-					Some attributes like <code>src</code> are currently included despite having security and
-					privacy issues in some contexts. Granular runtime configuration including allowlisted
-					hosts is probably desired. Some issues can be handled orthogonally with a
+					The <code>src</code> and <code>href</code> attributes are enabled here despite having
+					security and privacy issues in some contexts. (not here though!) Granular runtime
+					configuration including allowlisted hosts is probably desired. Some issues can be handled
+					orthogonally with a
 					<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">Content Security Policy</a
 					>.
 				</p>
