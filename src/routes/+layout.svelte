@@ -1,22 +1,31 @@
 <script lang="ts">
 	import '@ryanatkn/fuz/style.css';
 	import '@ryanatkn/fuz/theme.css';
+	import '@ryanatkn/fuz_code/prism.css';
 	import '$routes/style.css';
 
+	import 'prismjs';
+	import 'prism-svelte';
 	import Themed from '@ryanatkn/fuz/Themed.svelte';
 	import Dialog from '@ryanatkn/fuz/Dialog.svelte';
 	import Contextmenu from '@ryanatkn/fuz/Contextmenu.svelte';
-	import {create_contextmenu} from '@ryanatkn/fuz/contextmenu.js';
+	import {create_contextmenu, set_contextmenu} from '@ryanatkn/fuz/contextmenu.js';
 
 	import Settings from '$routes/Settings.svelte';
+	import {components} from '$routes/components.js';
+	import {set_components} from '$lib/view.js'; // TODO HACK where should this live?
+	import Header from '$routes/Header.svelte';
+	import Footer from '$routes/Footer.svelte';
 
-	const contextmenu = create_contextmenu();
+	set_components(components);
 
-	let show_settings = false;
+	const contextmenu = set_contextmenu(create_contextmenu());
+
+	let showSettings = false;
 </script>
 
 <svelte:head>
-	<title>@ryanatkn/fuz_template</title>
+	<title>End-user markdown sketch</title>
 </svelte:head>
 
 <svelte:body
@@ -25,12 +34,12 @@
 			content: 'Settings',
 			icon: '?',
 			run: () => {
-				show_settings = true;
+				showSettings = true;
 			},
 		},
 		{
 			content: 'Reload',
-			icon: '⟳',
+			icon: '⟳', // ↻
 			run: () => {
 				location.reload();
 			},
@@ -39,13 +48,15 @@
 />
 
 <Themed>
+	<Header />
 	<slot />
 	<Contextmenu {contextmenu} />
-	{#if show_settings}
-		<Dialog on:close={() => (show_settings = false)}>
+	{#if showSettings}
+		<Dialog on:close={() => (showSettings = false)}>
 			<div class="pane">
 				<Settings />
 			</div>
 		</Dialog>
 	{/if}
+	<Footer />
 </Themed>

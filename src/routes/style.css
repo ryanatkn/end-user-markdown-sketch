@@ -7,3 +7,12 @@
 }
 
 */
+
+/* TODO remove when `.color_b` is supported in Fuz */
+.success_text {
+	color: var(--color_b);
+}
+
+.error_text {
+	color: var(--color_c);
+}

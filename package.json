@@ -1,11 +1,10 @@
 {
-  "name": "@ryanatkn/fuz_template",
+  "name": "end-user-markdown-sketch",
   "version": "0.0.1",
-  "description": "a static web app and Node library template with TypeScript, Svelte, SvelteKit, Vite, esbuild, Fuz, and Gro",
-  "icon": "❄",
-  "public": true,
-  "homepage": "https://template.fuz.dev/",
-  "repository": "https://github.com/ryanatkn/fuz_template",
+  "description": "a description and proof-of-concept of a proposed flavor of markdown for end-users on social websites",
+  "license": "MIT",
+  "homepage": "https://ryanatkn.github.io/end-user-markdown-sketch",
+  "repository": "https://github.com/ryanatkn/end-user-markdown-sketch",
   "type": "module",
   "engines": {
     "node": ">=20.10"
@@ -24,6 +23,7 @@
     "@ryanatkn/belt": "^0.20.3",
     "@ryanatkn/eslint-config": "^0.1.0",
     "@ryanatkn/fuz": "^0.87.0",
+    "@ryanatkn/fuz_code": "^0.8.0",
     "@ryanatkn/gro": "^0.112.2",
     "@sveltejs/adapter-static": "^3.0.1",
     "@sveltejs/kit": "^2.5.0",
