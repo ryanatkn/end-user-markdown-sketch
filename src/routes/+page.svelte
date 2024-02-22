@@ -233,7 +233,7 @@
 					/>
 				</p>
 				<Markdown_Example
-					content={`network link to <code>https:</code>: //github.com/ryanatkn/end-user-markdown-sketch`}
+					content={`network link to <code>https:</code> - //github.com/ryanatkn/end-user-markdown-sketch`}
 				/>
 				<p>
 					<code>//path</code> is a shorthand for <Code
