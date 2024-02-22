@@ -18,7 +18,3 @@ This project copypasted a lot of code, especially from
   [CC-BY-4.0](https://github.com/syntax-tree/unist/blob/main/package.json) -
   Copyright (c) [Titus Wormer](https://wooorm.com/)
   - some types in [`$lib/markdown.ts`](/src/lib/markdown.ts)
-
-TODO
-
-- clickable hash anchors
