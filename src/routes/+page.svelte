@@ -96,9 +96,16 @@
 				<h2 id="extensibility">Extensibility</h2>
 				<p>
 					Almost everything is optional, configurable, or extensible. The goal is to support
-					usecase-specific features, not make a universal markdown. This trades away portability for
-					power and flexibility. It's a huge tradeoff and makes this flavor unsuitable for many
-					usecases - it doesn't replace existing markdowns.
+					open-ended usecase-specific features, not make a universal markdown.
+				</p>
+				<p>
+					For example, the asterisks for <code>*bold text*</code> are an extension behavior, and its
+					<code>&lt;strong&gt;</code> wrapper is configurable. It could be different HTML or a Svelte
+					component.
+				</p>
+				<p>
+					This trades away portability for power and flexibility. It's a huge tradeoff and makes
+					this flavor unsuitable for many usecases - it doesn't replace existing markdowns.
 				</p>
 				<p>There are currently two types of planned extensibility:</p>
 				<ul>
