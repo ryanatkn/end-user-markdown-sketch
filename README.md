@@ -21,5 +21,4 @@ This project copypasted a lot of code, especially from
 
 TODO
 
-- make hashtags/links clickable to open the dialog (in addition to the contextmenu behavior)
 - clickable hash anchors
