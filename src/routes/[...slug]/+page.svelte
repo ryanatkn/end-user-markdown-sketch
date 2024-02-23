@@ -4,6 +4,6 @@
 </script>
 
 <div class="box prose">
-	<p>/{$page.params.slug.substring(base.length)}</p>
+	<p>/{$page.params.slug}</p>
 	<p><a href="{base}/">go home</a></p>
 </div>
