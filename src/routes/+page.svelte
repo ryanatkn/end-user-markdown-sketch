@@ -319,11 +319,11 @@
 				<Markdown_Example content={`<Hashtag name="this" /> is equivalent to #this`} />
 				<Markdown_Example content={`<Missing /> components are called out`}>
 					<p>If a component isn't found, it renders a fallback that preserves the source text:</p>
+					<p slot="after">
+						Perhaps an optional Svelte component can be provided for missing components, and
+						plaintext is rendered if none is provided.
+					</p>
 				</Markdown_Example>
-				<p>
-					Perhaps an optional Svelte component can be provided for missing components, and plaintext
-					is rendered if none is provided.
-				</p>
 			</section>
 		</section>
 

@@ -12,6 +12,7 @@
 	<p class="prose">
 		<Markdown {content} />
 	</p>
+	<slot name="after" />
 </div>
 
 <style>
