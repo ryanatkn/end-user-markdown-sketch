@@ -313,7 +313,7 @@
 					{/each}
 				</ul>
 				<Markdown_Example
-					content={`<Link href="${base}/route">this Link</Link> does the same as /route`}
+					content={`<Link href="/route">this Link</Link> does the same as /route`}
 				/>
 				<Markdown_Example content={`mentioning <Mention name="username" /> the long way`} />
 				<Markdown_Example content={`<Hashtag name="this" /> is equivalent to #this`} />
