@@ -100,20 +100,23 @@
 				</p>
 				<p>
 					For example, the asterisks for <code>*bold text*</code> are an optional extension
-					behavior, and its
+					behavior, so bold could be characters other than <code>*</code>, and its
 					<code>&lt;strong&gt;</code> wrapper is configurable. It could be different HTML or a Svelte
 					component.
 				</p>
 				<p>
 					This trades away portability for power and flexibility. It's a huge tradeoff and makes
-					this flavor unsuitable for many usecases - it doesn't replace existing
+					this flavor unsuitable for many usecases - it doesn't substitute for existing
 					platform-independent markdowns.
 				</p>
-				<p>There are currently two types of planned extensibility:</p>
+				<p>Some planned extensibility:</p>
 				<ul>
 					<li>
 						text wrapped in control characters, like <code>*bold text*</code> and
-						<code>_italics_</code>
+						<code>_italics_</code> (probably double character variants too)
+					</li>
+					<li>
+						blocks wrapped in triple control characters, like <code>```code blocks```</code>
 					</li>
 					<li>
 						single words starting with a control character, like <code>@mentions</code> and
@@ -121,7 +124,10 @@
 					</li>
 				</ul>
 				<p>
-					<a href="#examples">The examples</a> demonstrate extensions with commonly-used control characters.
+					<a href="#examples">The examples</a> demonstrate extensions with commonly-used control
+					characters. Some example control characters include <code>*</code>, <code>_</code>,
+					<code>`</code>, <code>:</code>, <code>~</code>, <code>%</code>, <code>#</code>,
+					<code>|</code> - any could be supported, including emoji if you want to get 😈weird😈.
 				</p>
 			</section>
 		</section>
@@ -231,10 +237,6 @@
 						<li>
 							resolve backtick-wrapped <Markdown content="`known_identifiers`" /> to a system-defined
 							namespace, like an app's vocabulary for contextmenu and other widgety behaviors
-						</li>
-						<li>
-							maybe ~strikethrough~ because everyone else does it, but losing <code>~</code> to it seems
-							unfortunate
 						</li>
 						<li>extensibility</li>
 					</ul>
