@@ -193,11 +193,12 @@
 					A safe subset of HTML attributes is supported. Some attributes are security- and
 					privacy-sensitive, and some contexts need to disallow styles that break the UX.
 				</p>
-				<blockquote style:display="flex" class="wrap">
-					<code style:background-color="var(--bg_4)">ALLOWED_HTML_ATTRS</code> = {#each ALLOWED_HTML_ATTRS as attr, i}<code
-							>'{attr}'</code
-						>{#if i !== ALLOWED_HTML_ATTRS.size - 1},&nbsp;{/if}{/each}
-				</blockquote>
+				<Code
+					lang="ts"
+					content={`export const ALLOWED_HTML_ATTRS = new Set([\n\t${Array.from(ALLOWED_HTML_ATTRS)
+						.map((a) => `'${a}'`)
+						.join(', ')}\n]);`}
+				/>
 				<p>
 					The <code>src</code> and <code>href</code> attributes are enabled here despite having
 					security and privacy issues in some contexts. (not here though!) Granular runtime
