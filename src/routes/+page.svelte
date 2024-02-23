@@ -106,7 +106,8 @@
 				</p>
 				<p>
 					This trades away portability for power and flexibility. It's a huge tradeoff and makes
-					this flavor unsuitable for many usecases - it doesn't replace existing markdowns.
+					this flavor unsuitable for many usecases - it doesn't replace existing
+					platform-independent markdowns.
 				</p>
 				<p>There are currently two types of planned extensibility:</p>
 				<ul>
