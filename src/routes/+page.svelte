@@ -46,9 +46,9 @@
 				<p>
 					There are many markdowns. This project describes a proposed flavor of markdown designed
 					for the end-users and developers of an unannounced social app framework. My goal is to
-					provide these capabilities to end-users, not make a new flavor, and I would
-					enthusiastically use an existing library if it had the desired features and runtime
-					characteristics.
+					provide highly flexible and performant capabilities to end-users, not make a new flavor,
+					and I would enthusiastically use an existing library if it had the desired features and
+					runtime characteristics.
 				</p>
 				<aside>
 					This is a rough sketch from end-user and developer perspectives, not a well-constructed
