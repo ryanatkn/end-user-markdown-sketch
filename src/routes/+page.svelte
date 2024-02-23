@@ -39,7 +39,7 @@
 				<p>Some platform-independent markdowns include:</p>
 				<ul>
 					<li><a href="https://github.github.com/gfm/">GitHub Flavored Markdown</a></li>
-					<li><a href="https://mdsvex.pngwn.io/">MDSveX</a> (this sketch is based on its code)</li>
+					<li><a href="https://mdsvex.pngwn.io/">MDsveX</a> (this sketch is based on its code)</li>
 					<li><a href="https://djot.net/">djot</a></li>
 					<li><a href="https://commonmark.org/">CommonMark</a></li>
 				</ul>
