@@ -15,7 +15,7 @@
 				{...props}
 				>{#each view.children as child (child)}<svelte:self view={child} />{/each}</svelte:component
 			>{:else}<svelte:component this={components[view.tag]} {...props} />{/if}{:else}<code
-			class="error_text"
+			class="error"
 			title="the component {view.tag} was not found">{'<'}{view.tag} /></code
 		>{/if}{:else if view.type === 'svelte_element'}{#if view.children.length}<svelte:element
 			this={view.tag}

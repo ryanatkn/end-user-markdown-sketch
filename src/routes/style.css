@@ -9,10 +9,10 @@
 */
 
 /* TODO remove when `.color_b` is supported in Fuz */
-.success_text {
+.success {
 	color: var(--color_b);
 }
 
-.error_text {
+.error {
 	color: var(--color_c);
 }
