@@ -190,8 +190,8 @@
 			<section class="section_lg">
 				<h3 id="html_attributes">HTML attributes</h3>
 				<p>
-					A safe subset of HTML attributes is supported. Some attributes are security- and
-					privacy-sensitive, and some contexts need to disallow styles that break the UX.
+					A safe subset of HTML attributes is supported. Some attributes are sensitive for security
+					or privacy, and some contexts need to disallow styles that break the UX.
 				</p>
 				<Code
 					lang="ts"
