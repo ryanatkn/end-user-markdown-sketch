@@ -16,7 +16,7 @@
 
 	// TODO hacky
 	const onclick = () => {
-		(greet_actor(name) as any).run();
+		(greet_actor(name) as any).props.run();
 	};
 </script>
 
