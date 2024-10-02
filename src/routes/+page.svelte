@@ -136,9 +136,6 @@
 		<section class="panel p_md section_xl">
 			<section class="panel_inner">
 				<h2 id="examples">Examples</h2>
-				<aside>
-					⚠️ the current implementation has many bugs, limitations, and hacks (not the cool kind)
-				</aside>
 				<details>
 					<summary>technical details about how these examples work</summary>
 					<p>
