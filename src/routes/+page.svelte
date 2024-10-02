@@ -84,10 +84,6 @@
 							content="@dog"
 						/> and the other <Markdown content="@mentions and #hashtags" />
 					</aside>
-					<aside>
-						⚠️ this is a proof-of-concept implementation - one obvious bug is that multiple words
-						are not supported in bold/italics/code
-					</aside>
 				</div>
 			</div>
 		</section>
