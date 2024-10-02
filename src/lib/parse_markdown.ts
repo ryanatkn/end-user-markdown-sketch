@@ -33,7 +33,7 @@ export type Parsed_Node =
 	| Hashtag_Node
 	| Absolute_Link_Node
 	| Global_Link_Node
-	| Regular_Element_Node
+	| Element_Node
 	| Component_Node
 	| Expression_Node
 	| Text_Node
@@ -93,13 +93,13 @@ export interface Global_Link_Node extends Base_Node {
 	href: string;
 }
 
-export interface Regular_Element_Node extends Base_Node {
-	type: 'Regular_Element';
+export interface Element_Node extends Base_Node {
+	type: 'Element';
 	name: string;
 	attributes: Attribute_Node[];
 	children: Parsed_Node[];
 	self_closing: boolean;
-	self_closing_space: boolean;
+	self_closing_space: string | null;
 	original_syntax: 'html' | 'markdown';
 }
 
@@ -109,7 +109,7 @@ export interface Component_Node extends Base_Node {
 	attributes: Attribute_Node[];
 	children: Parsed_Node[];
 	self_closing: boolean;
-	self_closing_space: boolean;
+	self_closing_space: string | null;
 	original_syntax: 'html' | 'markdown';
 }
 
@@ -127,7 +127,7 @@ export interface Attribute_Node extends Base_Node {
 	type: 'Attribute';
 	name: string;
 	value: Text_Node[];
-	parent: Regular_Element_Node | Component_Node | null;
+	parent: Element_Node | Component_Node | null;
 }
 
 export interface Markdown_Link_Node extends Base_Node {
@@ -139,7 +139,6 @@ export interface Markdown_Link_Node extends Base_Node {
 export interface Blockquote_Node extends Base_Node {
 	type: 'Blockquote';
 	children: Parsed_Node[];
-	original_syntax: 'html' | 'markdown';
 }
 
 export interface List_Node extends Base_Node {
@@ -218,7 +217,7 @@ export class Parser {
 		} else if (this.#match('/')) {
 			return this.#parse_absolute_link();
 		} else if (this.#match('<')) {
-			return this.#parse_regular_element_or_component();
+			return this.#parse_element_or_component();
 		} else if (this.#match('{')) {
 			return this.#parse_expression();
 		} else {
@@ -400,13 +399,20 @@ export class Parser {
 		};
 	}
 
-	#parse_code(): Code_Node {
+	#parse_code(): Code_Node | Text_Node {
 		const start = this.#index;
 		this.#eat('`');
 		const content_start = this.#index;
 		const content_end = this.template.indexOf('`', this.#index);
 		if (content_end === -1) {
-			throw new Error('Unclosed inline code');
+			// Unclosed inline code, treat as text
+			this.#index = this.template.length;
+			return {
+				type: 'Text',
+				content: this.template.slice(start),
+				start,
+				end: this.#index,
+			};
 		}
 		const content = this.template.slice(content_start, content_end);
 		this.#index = content_end + 1;
@@ -540,7 +546,7 @@ export class Parser {
 		}
 	}
 
-	#parse_regular_element_or_component(): Regular_Element_Node | Component_Node {
+	#parse_element_or_component(): Element_Node | Component_Node | Text_Node {
 		const start = this.#index;
 		this.#eat('<');
 		const tag_name = this.#read_tag_name();
@@ -548,50 +554,78 @@ export class Parser {
 
 		const attributes = this.#parse_attributes();
 
-		const whitespace_start = this.#index;
-		this.#skip_whitespace();
-		const has_whitespace = this.#index > whitespace_start;
+		// Capture the whitespace between the tag and the self-closing "/>"
+		const whitespace = this.#read_whitespace();
 
 		let self_closing = false;
+		let self_closing_space: string | null = null;
 
 		if (this.#match('/>')) {
 			self_closing = true;
+			self_closing_space = whitespace || null; // Use null if no whitespace
 			this.#eat('/>');
 		} else if (this.#match('>')) {
 			this.#eat('>');
 		} else {
-			throw new Error(`Expected '>' or '/>' at index ${this.#index}`);
+			// Opening tag not properly closed, treat as text
+			return this.#create_unclosed_tag(start);
 		}
 
 		if (self_closing) {
 			return {
-				type: is_component ? 'Component' : 'Regular_Element',
+				type: is_component ? 'Component' : 'Element',
 				name: tag_name,
 				attributes,
 				children: [],
 				start,
 				end: this.#index,
 				self_closing,
-				self_closing_space: has_whitespace,
+				self_closing_space,
 				original_syntax: 'html',
 			};
 		} else {
-			const children = this.#parse_nodes_until(() =>
-				this.template.startsWith(`</${tag_name}>`, this.#index),
-			);
-			this.#eat(`</${tag_name}>`);
-			return {
-				type: is_component ? 'Component' : 'Regular_Element',
-				name: tag_name,
-				attributes,
-				children,
-				start,
-				end: this.#index,
-				self_closing: false,
-				self_closing_space: false,
-				original_syntax: 'html',
-			};
+			const closing_tag = `</${tag_name}>`;
+			const closing_index = this.template.indexOf(closing_tag, this.#index);
+			if (closing_index !== -1) {
+				const children = this.#parse_nodes_until(() =>
+					this.template.startsWith(closing_tag, this.#index),
+				);
+				this.#eat(closing_tag);
+				return {
+					type: is_component ? 'Component' : 'Element',
+					name: tag_name,
+					attributes,
+					children,
+					start,
+					end: this.#index,
+					self_closing: false,
+					self_closing_space: null,
+					original_syntax: 'html',
+				};
+			} else {
+				// Closing tag not found, treat opening tag as Text
+				return this.#create_unclosed_tag(start);
+			}
 		}
+	}
+
+	#create_unclosed_tag(start: number): Text_Node {
+		const unclosed_content = this.template.slice(start, this.#index);
+		return {
+			type: 'Text',
+			content: unclosed_content,
+			start,
+			end: this.#index,
+		};
+	}
+
+	#read_whitespace(): string {
+		let whitespace = '';
+		while (this.#index < this.template.length && /\s/.test(this.template[this.#index])) {
+			whitespace += this.template[this.#index];
+			this.#index++;
+		}
+		return whitespace;
 	}
 
 	#parse_attributes(): Attribute_Node[] {
@@ -809,7 +843,6 @@ export class Parser {
 			children,
 			start,
 			end,
-			original_syntax: 'markdown',
 		};
 	}
 
