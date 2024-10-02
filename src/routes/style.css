@@ -10,9 +10,9 @@
 
 /* TODO remove when `.color_b` is supported in Fuz */
 .success {
-	color: var(--color_b);
+	color: var(--color_b_5);
 }
 
 .error {
-	color: var(--color_c);
+	color: var(--color_c_5);
 }

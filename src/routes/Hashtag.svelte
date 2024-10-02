@@ -40,7 +40,7 @@
 		display: flex;
 		align-items: center;
 		font-weight: 700;
-		color: var(--color_d);
+		color: var(--color_d_5);
 	}
 	.hashtag:hover {
 		text-decoration: underline;

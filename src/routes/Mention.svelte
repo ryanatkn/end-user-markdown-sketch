@@ -37,7 +37,7 @@
 		display: flex;
 		align-items: center;
 		font-weight: 700;
-		color: var(--color_g);
+		color: var(--color_g_5);
 	}
 	.mention:hover {
 		text-decoration: underline;

@@ -18,5 +18,5 @@
 	run={() => {
 		do_something_with_hashtag(name);
 	}}
-	>Do something with #{name}{#if icon}{@render icon()}{:else}#{/if}</Contextmenu_Entry
+	>Do something with {#if icon}{@render icon()}{:else}#{/if}{name}</Contextmenu_Entry
 >

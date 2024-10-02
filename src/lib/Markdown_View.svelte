@@ -6,6 +6,7 @@
 	import {to_view_props} from '$lib/view.js';
 	import Markdown_View from '$lib/Markdown_View.svelte';
 	import Mention from '$routes/Mention.svelte';
+	import Hashtag from '$routes/Hashtag.svelte';
 
 	interface Props {
 		view: Parsed_Node; // TODO rename to `node`?
@@ -16,6 +17,7 @@
 	// TODO CLIENT_APP extract `components` (lazy loading?)
 	const components = components_context.get();
 
+	// TODO use components for Mention/Hashtag below
 	const loading_component = $derived(
 		view.type === 'Component' && view.name in components ? components[view.name] : null,
 	);
@@ -56,11 +58,9 @@
 {:else if view.type === 'Italic'}
 	<em>{@render child_nodes(view.children)}</em>
 {:else if view.type === 'Mention'}
-	<!-- TODO uses a different loading pattern, lazy load with same pattern? -->
 	<Mention name={view.name} />
 {:else if view.type === 'Hashtag'}
-	<!-- TODO component? -->
-	<span class="hashtag">#{view.name}</span>
+	<Hashtag name={view.name} />
 {:else if view.type === 'Absolute_Link'}
 	<a href={view.href}>{view.href}</a>
 {:else if view.type === 'Global_Link'}
