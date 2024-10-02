@@ -1,19 +1,12 @@
 // TODO this is just a hacky proof of concept
 
-import {getContext, setContext, type SvelteComponent} from 'svelte';
+import type {Component} from 'svelte';
 
-import type {Markdown_Root, Svelte_Tag} from '$lib/markdown.js';
+import type {Parsed_Node} from '$lib/parse_markdown.js';
 
-export type View_Node = Markdown_Root | Svelte_Tag; // TODO does this technically need to include `Node`?
+export type View_Node = Parsed_Node; // TODO root type?
 
-export type MarkdownComponents = Record<string, typeof SvelteComponent<any>>;
-
-const COMPONENTS_KEY = Symbol('components');
-
-export const get_components = (): MarkdownComponents => getContext(COMPONENTS_KEY);
-
-export const set_components = (components: MarkdownComponents): MarkdownComponents =>
-	setContext(COMPONENTS_KEY, components);
+export type MarkdownComponents = Record<string, Component<any>>;
 
 export const ALLOWED_HTML_ATTRS = new Set([
 	'class',
@@ -37,24 +30,23 @@ export const ALLOWED_HTML_ATTRS = new Set([
  * @returns Props object that can be splatted into a Svelte component.
  */
 export const to_view_props = (
-	view: View_Node,
-	allowed_html_attrs: Set<string> = ALLOWED_HTML_ATTRS,
+	view: Parsed_Node,
+	allowed_html_attributes: Set<string> = ALLOWED_HTML_ATTRS,
 ): Record<string, any> | undefined => {
 	let props: Record<string, any> | undefined;
-	if (view.properties) {
-		for (const prop of view.properties) {
+	if ('attributes' in view) {
+		for (const prop of view.attributes) {
 			const {value} = prop;
 			// Allow all component props but allowlist element attributes.
 			// Importantly this means component props can cause security and privacy vulnerabilities
 			// depending on their usage by the component.
-			if (view.type === 'svelte_component' || allowed_html_attrs.has(prop.name)) {
+			if (view.type === 'Component' || allowed_html_attributes.has(prop.name)) {
 				let str = '';
 				for (const v of value) {
-					if (v.type !== 'text') break;
-					str += v.value;
+					str += v.content;
 				}
 				if (str) {
-					(props || (props = Object.create(null)))[prop.name] = str;
+					(props ??= Object.create(null))[prop.name] = str;
 				}
 			}
 		}

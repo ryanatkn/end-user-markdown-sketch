@@ -1,6 +1,6 @@
 <script lang="ts">
-	import '@ryanatkn/fuz/style.css';
-	import '@ryanatkn/fuz/theme.css';
+	import '@ryanatkn/moss/style.css';
+	import '@ryanatkn/moss/theme.css';
 	import '@ryanatkn/fuz_code/prism.css';
 	import '$routes/style.css';
 
@@ -8,20 +8,24 @@
 	import 'prism-svelte';
 	import Themed from '@ryanatkn/fuz/Themed.svelte';
 	import Dialog from '@ryanatkn/fuz/Dialog.svelte';
-	import Contextmenu from '@ryanatkn/fuz/Contextmenu.svelte';
-	import {create_contextmenu, set_contextmenu} from '@ryanatkn/fuz/contextmenu.js';
+	import Contextmenu_Root from '@ryanatkn/fuz/Contextmenu_Root.svelte';
+	import type {Snippet} from 'svelte';
+	import {contextmenu_action} from '@ryanatkn/fuz/contextmenu_state.svelte.js';
 
 	import Settings from '$routes/Settings.svelte';
-	import {components} from '$routes/components.js';
-	import {set_components} from '$lib/view.js'; // TODO HACK where should this live?
+	import {components, components_context} from '$routes/components.js';
 	import Header from '$routes/Header.svelte';
 	import Footer from '$routes/Footer.svelte';
 
-	set_components(components);
+	interface Props {
+		children: Snippet;
+	}
 
-	const contextmenu = set_contextmenu(create_contextmenu());
+	const {children}: Props = $props();
 
-	let showSettings = false;
+	components_context.set(components);
+
+	let show_settings = $state(false);
 </script>
 
 <svelte:head>
@@ -29,34 +33,41 @@
 </svelte:head>
 
 <svelte:body
-	use:contextmenu.action={[
+	use:contextmenu_action={[
 		{
-			content: 'Settings',
-			icon: '?',
-			run: () => {
-				showSettings = true;
+			snippet: 'text',
+			props: {
+				content: 'Settings',
+				icon: '?',
+				run: () => {
+					show_settings = true;
+				},
 			},
 		},
 		{
-			content: 'Reload',
-			icon: '⟳', // ↻
-			run: () => {
-				location.reload();
+			snippet: 'text',
+			props: {
+				content: 'Reload',
+				icon: '⟳', // ↻
+				run: () => {
+					location.reload();
+				},
 			},
 		},
 	]}
 />
 
 <Themed>
-	<Header />
-	<slot />
-	<Contextmenu {contextmenu} />
-	{#if showSettings}
-		<Dialog on:close={() => (showSettings = false)}>
-			<div class="pane">
-				<Settings />
-			</div>
-		</Dialog>
-	{/if}
-	<Footer />
+	<Contextmenu_Root>
+		<Header />
+		{@render children()}
+		{#if show_settings}
+			<Dialog onclose={() => (show_settings = false)}>
+				<div class="pane">
+					<Settings />
+				</div>
+			</Dialog>
+		{/if}
+		<Footer />
+	</Contextmenu_Root>
 </Themed>

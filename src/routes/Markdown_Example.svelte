@@ -1,18 +1,25 @@
 <script lang="ts">
 	import Code from '@ryanatkn/fuz_code/Code.svelte';
+	import type {Snippet} from 'svelte';
 
 	import Markdown from '$lib/Markdown.svelte';
 
-	export let content: string;
+	interface Props {
+		content: string;
+		after?: Snippet;
+		children?: Snippet;
+	}
+
+	const {content, after, children}: Props = $props();
 </script>
 
 <div class="markdown_text_example panel">
-	<slot />
+	{@render children?.()}
 	<Code {content} />
-	<p class="prose">
+	<p>
 		<Markdown {content} />
 	</p>
-	<slot name="after" />
+	{@render after?.()}
 </div>
 
 <style>
@@ -20,7 +27,7 @@
 		background-color: var(--bg);
 		display: flex;
 		flex-direction: column;
-		margin-bottom: var(--spacing_lg);
-		padding: var(--spacing_sm);
+		margin-bottom: var(--space_lg);
+		padding: var(--space_sm);
 	}
 </style>

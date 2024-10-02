@@ -12,14 +12,18 @@
 		'<span class="chip success">class</span> is allowed but <span class="chip" style="color: red">style</span> and most other attributes are not yet - it should support a safe and configurable subset of HTML, not every usecase has the same needs\n\n' +
 		'<button onclick="alert(\'hax\')" title="this button tries to hack you with the onclick attribute but the attribute allowlist disallows it">onclick does not work</button>';
 
-	export let value = INITIAL_VALUE;
+	interface Props {
+		value?: string;
+	}
 
-	$: contents = value.split('\n').filter(Boolean); // TODO is super hacky
+	let {value = $bindable(INITIAL_VALUE)}: Props = $props();
+
+	const contents = $derived(value.split('\n').filter(Boolean)); // TODO is super hacky
 </script>
 
 <div class="playground">
-	<textarea bind:value />
-	<div class="preview prose">
+	<textarea bind:value></textarea>
+	<div class="preview">
 		<!-- TODO is super hacky, remove the loop when the parser is fixed -->
 		{#each contents as content}<div class="spaced"><Markdown {content} /></div>{/each}
 	</div>
@@ -28,7 +32,7 @@
 <style>
 	.playground {
 		display: flex;
-		gap: var(--spacing_md);
+		gap: var(--space_md);
 		flex-wrap: wrap;
 	}
 	textarea {

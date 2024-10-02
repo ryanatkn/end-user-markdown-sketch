@@ -1,5 +1,6 @@
-import type {EntryGenerator} from './$types';
+// TODO type?
+// import type {EntryGenerator} from './$types';
 
-export const entries: EntryGenerator = async () => {
+export const entries: any = () => {
 	return [{slug: 'root'}, {slug: 'root/link'}];
 };

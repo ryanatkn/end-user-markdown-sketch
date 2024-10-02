@@ -6,14 +6,15 @@
 	import Markdown_Playground from '$lib/Markdown_Playground.svelte';
 	import Markdown from '$lib/Markdown.svelte';
 	import Markdown_Example from '$routes/Markdown_Example.svelte';
-	import {ALLOWED_HTML_ATTRS, get_components} from '$lib/view';
+	import {ALLOWED_HTML_ATTRS} from '$lib/view.js';
+	import {components_context} from '$routes/components.js';
 
-	const components = get_components();
+	const components = components_context.get();
 </script>
 
-<main class="prose width_md">
+<main class="width_md">
 	<div class="width_full">
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<div class="panel_inner">
 				<h2 id="motivation">Motivation</h2>
 				<p>
@@ -64,9 +65,9 @@
 				</aside>
 			</div>
 		</section>
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<div class="panel_inner">
-				<div class="prose">
+				<div>
 					<h2 id="playground">Playground</h2>
 					<p>
 						These examples are specific to this context's configuration. Each feature is optional
@@ -77,21 +78,17 @@
 					<br />
 				</div>
 				<Markdown_Playground />
-				<div class="prose">
+				<div>
 					<aside>
 						tip: try opening the contextmenu on <Markdown content="@fox" /> and <Markdown
 							content="@dog"
 						/> and the other <Markdown content="@mentions and #hashtags" />
 					</aside>
-					<aside>
-						⚠️ this is a proof-of-concept implementation - one obvious bug is that multiple words
-						are not supported in bold/italics/code
-					</aside>
 				</div>
 			</div>
 		</section>
 
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<section class="panel_inner">
 				<h2 id="extensibility">Extensibility</h2>
 				<p>
@@ -132,12 +129,9 @@
 			</section>
 		</section>
 
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<section class="panel_inner">
 				<h2 id="examples">Examples</h2>
-				<aside>
-					⚠️ the current implementation has many bugs, limitations, and hacks (not the cool kind)
-				</aside>
 				<details>
 					<summary>technical details about how these examples work</summary>
 					<p>
@@ -323,15 +317,17 @@
 				<Markdown_Example content={`<Hashtag name="this" /> is equivalent to #this`} />
 				<Markdown_Example content={`<Missing /> components are called out`}>
 					<p>If a component isn't found, it renders a fallback that preserves the source text:</p>
-					<p slot="after">
-						Perhaps an optional Svelte component can be provided for missing components, and
-						plaintext is rendered if none is provided.
-					</p>
+					{#snippet after()}
+						<p>
+							Perhaps an optional Svelte component can be provided for missing components, and
+							plaintext is rendered if none is provided.
+						</p>
+					{/snippet}
 				</Markdown_Example>
 			</section>
 		</section>
 
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<section class="panel_inner">
 				<h2 id="discussions">Discussions</h2>
 				<ul>
@@ -360,9 +356,9 @@
 	}
 
 	.panel_inner {
-		padding: var(--spacing_md);
+		padding: var(--space_md);
 		background-color: var(--bg);
-		border-radius: var(--border_radius_xs);
+		border-radius: var(--radius_xs);
 	}
 
 	/* TODO these are all hacky, is a recurring issue */
@@ -373,9 +369,9 @@
 		margin-bottom: 0 !important;
 	}
 	.section_lg.section_lg {
-		margin-bottom: var(--spacing_6);
+		margin-bottom: var(--space_6);
 	}
 	.section_xl.section_xl {
-		margin-bottom: var(--spacing_8);
+		margin-bottom: var(--space_8);
 	}
 </style>

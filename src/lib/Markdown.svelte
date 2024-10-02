@@ -1,14 +1,16 @@
 <script lang="ts">
-	// TODO this is just a hacky proof of concept
-
 	import Markdown_View from '$lib/Markdown_View.svelte';
-	import {todo_hacky_parse} from '$lib/todo_hacky_parse.js';
+	import {parse_markdown} from '$lib/parse_markdown.js';
 
-	// TODO maybe merge with `Markdown_View.svelte`
+	interface Props {
+		content: string;
+	}
 
-	export let content: string;
+	const {content}: Props = $props();
 
-	$: view = todo_hacky_parse(content); // TODO caching with eviction
+	const nodes = $derived(parse_markdown(content)); // TODO caching (with eviction in `update_space`/`delete_space`/etc)
 </script>
 
-<Markdown_View {view} />
+{#each nodes as view (view)}
+	<Markdown_View {view} />
+{/each}
