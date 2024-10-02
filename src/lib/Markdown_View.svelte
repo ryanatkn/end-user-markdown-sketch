@@ -8,12 +8,12 @@
 	import Mention from '$routes/Mention.svelte';
 
 	interface Props {
-		view: Parsed_Node; // TODO BLOCK rename to `node`?
+		view: Parsed_Node; // TODO rename to `node`?
 	}
 
 	const {view}: Props = $props();
 
-	// TODO BLOCK CLIENT_APP extract `components` (lazy loading?)
+	// TODO CLIENT_APP extract `components` (lazy loading?)
 	const components = components_context.get();
 
 	const loading_component = $derived(
