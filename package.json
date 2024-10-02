@@ -7,7 +7,7 @@
   "repository": "https://github.com/ryanatkn/end-user-markdown-sketch",
   "type": "module",
   "engines": {
-    "node": ">=20.10"
+    "node": ">=20.17"
   },
   "scripts": {
     "start": "gro dev",
