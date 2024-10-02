@@ -1,1296 +1,842 @@
 /*
 
-Adapted from MDsveX: <https://github.com/pngwn/MDsveX>
+parse_markdown.ts
 
-MIT License
+Parser for a custom language that extends
+Svelte and HTML with some Markdown and Markdown-like features.
 
-Copyright (c) 2020 pngwn
+## Features
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+- bold text is implemented with *single asterisks* -
+	double asterisks like **this** are plain text
+- italics are implemented with _single underscores_ -
+	like with asterisks, double underscores like __this__ are plain text
+- prefixes are supported like @mentions and #hashtags and /absolute_links and //global_links
+- Windows is ignored, so carriage returns like `\r\n` are not used, only `\n`
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+## Style guide
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Notice the code style uses `#`-prefixed identifiers for private methods and properties.
+It does NOT use the TypeScript `private` prefix, nor should it -
+generated code MUST use the `#` prefix and NOT the `private` keyword.
+All identifiers use `snake_case` including `Title_Snakes` for type and class names.
 
 */
+export const parse_markdown = (text: string): Parsed_Node[] => new Parser(text).parse();
 
-import type {
-	Point,
-	Base_Tag,
-	Svelte_Meta,
-	Property,
-	Svelte_Element,
-	Directive,
-	Text,
-	Markdown_Root,
-	Svelte_Expression,
-	Void_Block,
-	Branching_Block,
-	Branch,
-	Comment,
-	Svelte_Dynamic_Content,
-	Modifier,
-} from '$lib/markdown.js';
+export type Parsed_Node =
+	| Code_Node
+	| Code_Block_Node
+	| Bold_Node
+	| Italic_Node
+	| Mention_Node
+	| Hashtag_Node
+	| Absolute_Link_Node
+	| Global_Link_Node
+	| Regular_Element_Node
+	| Component_Node
+	| Expression_Node
+	| Text_Node
+	| Attribute_Node
+	| Markdown_Link_Node
+	| Blockquote_Node
+	| List_Node
+	| List_Item_Node;
 
-export const parse_markdown = (content: string, generate_positions = false): Markdown_Root => {
-	const root: Markdown_Root = {
-		type: 'root',
-		children: parse_siblings(
-			content.replace(LINE_BREAKS, LINE_FEED),
-			parse_siblings,
-			generate_positions,
-		)[0],
-	};
-
-	// console.log(JSON.stringify(root.children[root.children.length - 1], null, 2));
-	if (generate_positions) {
-		root.position = {
-			start: {column: 1, line: 1, offset: 0},
-			end: {...root.children[root.children.length - 1].position!.end},
-		};
-	}
-
-	return root;
-};
-
-export interface Markdown_Parser {
-	(...args: Parse_Node_Args): Parse_Return;
+export interface Base_Node {
+	type: string;
+	start: number;
+	end: number;
 }
 
-export type Parse_Return = [Base_Tag[], Point, number];
-
-export interface Parse_Node {
-	(...args: Parse_Node_Args): Parse_Result | undefined;
+export interface Code_Node extends Base_Node {
+	type: 'Code';
+	content: string;
 }
 
-export type Parse_Node_Args = [
-	value: string,
-	parser: Markdown_Parser,
-	generate_positions: boolean,
-	current_position?: Point | undefined,
-];
+export interface Code_Block_Node extends Base_Node {
+	type: 'Code_Block';
+	content: string;
+	language: string | null;
+	fence: string;
+	leading_whitespace: string;
+	trailing_whitespace: string;
+}
 
-const parse_siblings: Markdown_Parser = (
-	value,
-	parser = parse_siblings,
-	generate_positions = false,
-	current_position = {line: 1, column: 1, offset: 0},
-) => {
-	const children = [];
+export interface Bold_Node extends Base_Node {
+	type: 'Bold';
+	children: Parsed_Node[];
+}
 
-	let unchomped = value;
-	let position: Point = {...current_position};
-	let parsed;
-	let index = 0;
-	let result;
-	while (true) {
-		result = parse_node(unchomped, parser, generate_positions, position);
-		if (!result) break;
-		position = result.position;
-		unchomped = result.unchomped;
-		parsed = result.parsed;
+export interface Italic_Node extends Base_Node {
+	type: 'Italic';
+	children: Parsed_Node[];
+}
 
-		index += position.index!;
+export interface Mention_Node extends Base_Node {
+	type: 'Mention';
+	name: string;
+}
 
-		children.push(parsed);
-		if (unchomped.trim().length === 0) break;
-	}
+export interface Hashtag_Node extends Base_Node {
+	type: 'Hashtag';
+	name: string;
+}
 
-	return [children, position, index];
-};
+export interface Absolute_Link_Node extends Base_Node {
+	type: 'Absolute_Link';
+	href: string;
+}
 
-/**
- *
- * @param value - The input value to be parsed
- * @param parser - The parser to use when parsing children, this defaults to `parse_node`
- * @param generate_positions - Generate positional data
- * @param current_position - The current position in the document
- * @returns
- */
-export const parse_node: Parse_Node = (value, parser, generate_positions, current_position) => {
-	let index = 0;
-	let quote_type = '';
-	let expr_quote_type = '';
-	let closing_tag = '';
-	let brace_count = 0;
+export interface Global_Link_Node extends Base_Node {
+	type: 'Global_Link';
+	href: string;
+}
 
-	const node_stack: Base_Tag[] = [];
-	const state: Parse_State[] = [];
+export interface Regular_Element_Node extends Base_Node {
+	type: 'Regular_Element';
+	name: string;
+	attributes: Attribute_Node[];
+	children: Parsed_Node[];
+	self_closing: boolean;
+	self_closing_space: boolean;
+	original_syntax: 'html' | 'markdown';
+}
 
-	let position: Point = current_position || {
-		line: 1,
-		column: 1,
-		offset: 0,
-		index,
-	};
+export interface Component_Node extends Base_Node {
+	type: 'Component';
+	name: string;
+	attributes: Attribute_Node[];
+	children: Parsed_Node[];
+	self_closing: boolean;
+	self_closing_space: boolean;
+	original_syntax: 'html' | 'markdown';
+}
 
-	let char = value.charCodeAt(index);
+export interface Expression_Node extends Base_Node {
+	type: 'Expression';
+	content: string;
+}
 
-	const chomp = (): void => {
-		// newline means new line
-		if (char === LINEFEED) {
-			position.line++;
-			position.column = 1;
-		} else {
-			// otherwise shift along the column pointer
-			position.column++;
-		}
+export interface Text_Node extends Base_Node {
+	type: 'Text';
+	content: string;
+}
 
-		// refers to the current parse
-		index++;
+export interface Attribute_Node extends Base_Node {
+	type: 'Attribute';
+	name: string;
+	value: Text_Node[];
+	parent: Regular_Element_Node | Component_Node | null;
+}
 
-		position.offset++;
-		// stay in sync
-		position.index = index;
-		char = value.charCodeAt(index);
-	};
+export interface Markdown_Link_Node extends Base_Node {
+	type: 'Markdown_Link';
+	text: Parsed_Node[];
+	href: string;
+}
 
-	const place = (): Point => ({
-		line: position.line,
-		column: position.column,
-		offset: position.offset,
-	});
+export interface Blockquote_Node extends Base_Node {
+	type: 'Blockquote';
+	children: Parsed_Node[];
+	original_syntax: 'html' | 'markdown';
+}
 
-	let current_state: Parse_State | undefined;
+export interface List_Node extends Base_Node {
+	type: 'List';
+	items: List_Item_Node[];
+	indent_level: number;
+	indent_text: string;
+}
 
-	const pop_state = (): void => {
-		state.pop();
-		current_state = state[state.length - 1];
-	};
+export interface List_Item_Node extends Base_Node {
+	type: 'List_Item';
+	children: Parsed_Node[];
+}
 
-	const set_state = (name: Parse_State, replace?: boolean): void => {
-		if (replace) state.pop();
-		state.push((current_state = name));
-	};
+export class Parser {
+	#index: number = 0;
 
-	let current_node!: Base_Tag;
+	constructor(protected template: string) {}
 
-	const push_node = (node: Base_Tag): void => {
-		node_stack.push((current_node = node));
-	};
+	parse(): Parsed_Node[] {
+		const nodes: Parsed_Node[] = [];
+		while (this.#index < this.template.length) {
+			if (this.#match_list()) {
+				const list = this.#parse_list(0);
+				nodes.push(list);
 
-	const pop_node = () => {
-		node_stack.pop();
-		current_node = node_stack[node_stack.length - 1];
-	};
-
-	let _n: Base_Tag;
-	let _n2: Base_Tag;
-
-	while (true) {
-		// console.log(value[index], node_stack, state);
-
-		if (value[index] === void 0) {
-			if (generate_positions) current_node.position!.end = place();
-			break;
-		}
-
-		// right at the start
-		if (current_state === void 0) {
-			if (BLOCK_BRANCH.test(value.substring(index))) {
-				if (generate_positions && node_stack.length) current_node.position!.end = place();
-				return;
-			}
-
-			if (END_TAG_START.test(value.substring(index))) {
-				return;
-			}
-
-			if (COMMENT_START.test(value.substring(index))) {
-				_n = {
-					type: 'comment',
-					value: '',
-				} as Comment;
-
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-
-				push_node(_n);
-				set_state(Parse_State.IN_COMMENT);
-				chomp();
-				chomp();
-				chomp();
-				chomp();
-				continue;
-			}
-			// "{" => tag
-			if (char === OPEN_BRACE) {
-				push_node({
-					type: 'svelte_dynamic_content',
-				});
-				if (generate_positions) {
-					current_node.position = {start: place(), end: EMPTY_POINT};
+				// After parsing a list, consume any remaining blank lines and add them as Text nodes
+				let newlines = '';
+				while (this.#match('\n')) {
+					newlines += '\n';
+					this.#eat('\n');
 				}
-				set_state(Parse_State.MAYBE_IN_DYNAMIC_CONTENT);
-				chomp();
-				continue;
-			}
-
-			if (char === OPEN_ANGLE_BRACKET) {
-				set_state(Parse_State.IN_START_TAG);
-				push_node({
-					type: '',
-					tag: '',
-					properties: [],
-					selfclosing: false,
-					children: [],
-				});
-				if (generate_positions) current_node.position = {start: place(), end: EMPTY_POINT};
-
-				chomp();
-				continue;
-			}
-		}
-
-		if (current_state === Parse_State.IN_COMMENT) {
-			if (COMMENT_END.test(value.substring(index))) {
-				chomp();
-				chomp();
-				chomp();
-
-				if (generate_positions) current_node.position!.end = place();
-				break;
-			}
-
-			(current_node as Comment).value += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.MAYBE_IN_DYNAMIC_CONTENT) {
-			if (char === SPACE || char === LINEFEED || char === TAB) {
-				chomp();
-				continue;
-			}
-
-			if (char === AT) {
-				_n = {
-					type: 'svelte_void_block',
-					name: '',
-					expression: {
-						type: 'svelte_expression',
-						value: '',
-					},
-				} as Void_Block;
-
-				if (generate_positions) {
-					_n.position = {...current_node.position!};
+				if (newlines) {
+					nodes.push({
+						type: 'Text',
+						content: newlines,
+						start: this.#index - newlines.length,
+						end: this.#index,
+					});
 				}
-
-				pop_node();
-				push_node(_n);
-
-				set_state(Parse_State.IN_VOID_BLOCK, true);
-				chomp();
-				continue;
-			}
-
-			if (char === OCTOTHERP) {
-				set_state(Parse_State.IN_BRANCHING_BLOCK, true);
-				set_state(Parse_State.IN_BRANCHING_BLOCK_NAME);
-				chomp();
-				continue;
-			}
-
-			set_state(Parse_State.IN_DYNAMIC_CONTENT, true);
-
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_DYNAMIC_CONTENT) {
-			if (char === CLOSE_BRACE) {
-				chomp();
-				if (generate_positions) {
-					current_node.position!.end = place();
-				}
-				if (node_stack.length === 1) break;
-
-				pop_node();
-				pop_state();
-
-				continue;
-			}
-
-			const n: Svelte_Expression = {
-				type: 'svelte_expression',
-				value: '',
-			};
-			(current_node as Svelte_Dynamic_Content).expression = n;
-			push_node(n);
-
-			if (generate_positions) {
-				current_node.position = {start: place(), end: EMPTY_POINT};
-			}
-
-			set_state(Parse_State.IN_EXPRESSION);
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_BRANCHING_BLOCK_NAME) {
-			if (char === CLOSE_BRACE) {
-				// each
-				pop_state();
-
-				continue;
-			}
-
-			if (char === SPACE) {
-				_n = {
-					type: 'svelte_branching_block',
-					name: (current_node as Svelte_Expression).value,
-					branches: [],
-				} as Branching_Block;
-				_n2 = {
-					type: 'svelte_branch',
-					name: (current_node as Svelte_Expression).value,
-					expression: {
-						type: 'svelte_expression',
-						value: '',
-					},
-					children: [],
-				} as Branch;
-				if (generate_positions) {
-					_n.position = {...(current_node as Svelte_Expression).position!};
-					_n2.position = {...(current_node as Svelte_Expression).position!};
-				}
-
-				pop_node();
-				push_node(_n);
-				push_node(_n2);
-
-				push_node((_n2 as Branch).expression);
-				(_n as Branching_Block).branches.push(_n2 as Branch);
-				pop_state();
-
-				continue;
-			}
-
-			if (!(current_node as Svelte_Expression).value) {
-				current_node.value = '';
-			}
-
-			current_node.value += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_BRANCHING_BLOCK_END) {
-			if (char === SPACE || char === LINEFEED || char === TAB) {
-				// ERROR - NAME AFTER CLOSING BLOCK SLASH
-			}
-
-			if (char === CLOSE_BRACE) {
-				pop_node();
-				chomp();
-				if (generate_positions) current_node.position!.end = place();
-				if (closing_tag !== (current_node as Branching_Block).name) {
-					// ERROR SHOULD BE A MATCHING NAME (current_node.name)
-				}
-
-				break;
-			}
-
-			closing_tag += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_BRANCHING_BLOCK_BRANCH_NAME) {
-			if (
-				(char === SPACE && value.substring(index - 4, index + 3) !== 'else if') ||
-				char === CLOSE_BRACE
-			) {
-				_n2 = {
-					type: 'svelte_branch',
-					name: (current_node as Svelte_Expression).value,
-					expression: {
-						type: 'svelte_expression',
-						value: '',
-					},
-					children: [],
-				} as Branch;
-				if (generate_positions) {
-					_n2.position = {...(current_node as Svelte_Expression).position!};
-				}
-				pop_node();
-				pop_node();
-				(current_node as Branching_Block).branches.push(_n2 as Branch);
-				push_node(_n2);
-				push_node((_n2 as Branch).expression);
-
-				pop_state();
-				continue;
-			}
-
-			current_node.value += value[index];
-			chomp();
-
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_BRANCHING_BLOCK) {
-			if (char === CLOSE_BRACE) {
-				if ((current_node as Svelte_Expression).type === 'svelte_expression') pop_node();
-				chomp();
-				set_state(Parse_State.PARSE_CHILDREN);
-				continue;
-			}
-
-			if (char === SPACE) {
-				set_state(Parse_State.IN_EXPRESSION);
-				chomp();
-
-				if (generate_positions) current_node.position = {start: place(), end: EMPTY_POINT};
-
-				continue;
-			}
-		}
-
-		if (current_state === Parse_State.IN_BRANCHING_BLOCK_BRANCH) {
-			if (char === COLON) {
-				set_state(Parse_State.IN_BRANCHING_BLOCK_BRANCH_NAME, true);
-
-				chomp();
-				continue;
-			}
-
-			if (char === SLASH) {
-				closing_tag = '';
-				pop_node();
-				set_state(Parse_State.IN_BRANCHING_BLOCK_END, true);
-				chomp();
-				continue;
-			}
-
-			if (char === SPACE || char === LINEFEED || char === TAB) {
-				chomp();
-				continue;
-			}
-		}
-
-		if (current_state === Parse_State.IN_VOID_BLOCK) {
-			if (char === SPACE) {
-				push_node((current_node as Void_Block).expression);
-				set_state(Parse_State.IN_EXPRESSION);
-				chomp();
-				if (generate_positions) current_node.position = {start: place(), end: EMPTY_POINT};
-				continue;
-			}
-
-			if (char === CLOSE_BRACE) {
-				// if (generate_positions)
-				// 	// @ts-expect-error
-				// 	(current_node as Void_Block).expression.position = {
-				// 		start: place(),
-				// 		end: place(),
-				// 	};
-
-				chomp();
-				if (generate_positions) current_node.position!.end = place();
-
-				break;
-			}
-
-			(current_node as Void_Block).name += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_START_TAG) {
-			if (char === SLASH) return;
-			// lowercase characters for element names
-			if (char >= LOWERCASE_A && char <= LOWERCASE_Z) {
-				current_node.type = 'svelte_element';
-				set_state(Parse_State.IN_TAG_NAME);
-				continue;
-			}
-
-			// uppercase characters for Component names UPPERCASE_A, UPPERCASE_Z
-			if (char >= UPPERCASE_A && char <= UPPERCASE_Z) {
-				current_node.type = 'svelte_component';
-				set_state(Parse_State.IN_TAG_NAME);
-				continue;
-			}
-
-			if (char === SPACE || char === TAB || char === LINEFEED) {
-				chomp();
-				continue;
-			}
-		}
-
-		// we are inside a tags name
-		if (current_state === Parse_State.IN_TAG_NAME) {
-			if (char === SLASH || (char === CLOSE_ANGLE_BRACKET && void_els.has(current_node.tag!))) {
-				set_state(Parse_State.IN_CLOSING_SLASH, true);
-				current_node.selfclosing = true;
-				if (char === SLASH) chomp();
-				continue;
-			}
-			// space or linefeed put us into the tag body
-			if (char === SPACE || char === TAB || char === LINEFEED) {
-				set_state(Parse_State.IN_TAG_BODY, true);
-				chomp();
-				continue;
-			}
-
-			if (char === COLON) {
-				current_node.type = 'svelte_meta';
-				current_node.tag = '';
-				chomp();
-				continue;
-			}
-
-			if (char === CLOSE_ANGLE_BRACKET) {
-				set_state(Parse_State.IN_TAG_BODY, true);
-				continue;
-			}
-
-			(current_node as Svelte_Meta).tag += value[index];
-			chomp();
-			continue;
-		}
-
-		// we are inside a start tag after the name
-		if (current_state === Parse_State.IN_TAG_BODY) {
-			if (char === OPEN_BRACE) {
-				set_state(Parse_State.IN_SHORTHAND_ATTR);
-				const _node: Property = {
-					type: 'svelte_property',
-					name: '',
-					value: [
-						{
-							type: 'svelte_dynamic_content',
-							expression: {
-								type: 'svelte_expression',
-								value: '',
-							},
-						},
-					],
-					modifiers: [],
-					shorthand: 'expression',
-				};
-
-				current_node.properties!.push(_node);
-				push_node(_node);
-				if (generate_positions) {
-					current_node.position = {start: place(), end: EMPTY_POINT};
-					(current_node as Property).value[0].position = {
-						start: place(),
-						end: EMPTY_POINT,
-					};
-				}
-				chomp();
-
-				if (generate_positions) {
-					((current_node as Property).value[0] as Svelte_Dynamic_Content).expression.position = {
-						start: place(),
-						end: EMPTY_POINT,
-					};
-				}
-				continue;
-			}
-			// letters mean we've hit an attribute
-			if (
-				(char >= LOWERCASE_A && char <= LOWERCASE_Z) ||
-				(char >= UPPERCASE_A && char <= UPPERCASE_Z)
-			) {
-				set_state(Parse_State.IN_ATTR_NAME);
-				const _node: Property = {
-					type: 'svelte_property',
-					name: '',
-					value: [],
-					modifiers: [],
-					shorthand: 'none',
-				};
-
-				current_node.properties!.push(_node);
-				push_node(_node);
-				if (generate_positions) current_node.position = {start: place(), end: EMPTY_POINT};
-				continue;
-			}
-
-			// "/" or  ">" (for void tags) put us in a terminal state
-			if (char === SLASH || (char === CLOSE_ANGLE_BRACKET && void_els.has(current_node.tag!))) {
-				set_state(Parse_State.IN_CLOSING_SLASH, true);
-				current_node.selfclosing = true;
-				if (char === SLASH) chomp();
-				continue;
-			}
-
-			if (char === CLOSE_ANGLE_BRACKET) {
-				set_state(Parse_State.PARSE_CHILDREN, true);
-				chomp();
-				if (generate_positions) current_node.position!.end = place();
-				continue;
-			}
-
-			if (char === SPACE || char === TAB || char === LINEFEED) {
-				chomp();
-				continue;
-			}
-		}
-
-		if (current_state === Parse_State.IN_SHORTHAND_ATTR) {
-			if (char === CLOSE_BRACE) {
-				(current_node as Property).name = (
-					(current_node as Property).value[0] as Svelte_Dynamic_Content
-				).expression.value;
-				if (generate_positions) {
-					current_node.position!.end = place();
-					(current_node as Property).value[0].position!.end = place();
-				}
-				pop_state();
-				pop_node();
-				chomp();
-				continue;
-			}
-
-			push_node(((current_node as Property).value[0] as Svelte_Dynamic_Content).expression);
-			set_state(Parse_State.IN_EXPRESSION);
-
-			continue;
-		}
-
-		// we are expecting the tag to close completely here
-		if (current_state === Parse_State.IN_CLOSING_SLASH) {
-			// ignore ws
-			if (char === SPACE || char === TAB || char === LINEFEED) {
-				chomp();
-				continue;
-			}
-			// we closed successfully, end the parse
-			if (char === CLOSE_ANGLE_BRACKET) {
-				chomp();
-				if (generate_positions) current_node.position!.end = place();
-				break;
-			}
-
-			// DANGER ZONE - something went wrong
-		}
-
-		// we are parsing a property name
-		if (current_state === Parse_State.IN_ATTR_NAME) {
-			// " ", "\n", "/" or ">" => shorthand boolean attr
-
-			if (
-				char === SPACE ||
-				char === TAB ||
-				char === LINEFEED ||
-				char === SLASH ||
-				char === CLOSE_ANGLE_BRACKET
-			) {
-				(current_node as Property).shorthand = 'boolean';
-				if (generate_positions) current_node.position!.end = place();
-				pop_state();
-				pop_node();
-				continue;
-			}
-
-			// ":" => directive
-			if (char === COLON) {
-				(current_node as Directive).type = 'svelte_directive';
-				(current_node as Directive).specifier = '';
-				set_state(Parse_State.IN_DIRECTIVE_SPECIFIER, true);
-				chomp();
-				continue;
-			}
-
-			if (char === PIPE) {
-				chomp();
-				_n = {type: 'modifier', value: ''} as Modifier;
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Directive).modifiers.push(_n as Modifier);
-				push_node(_n);
-				set_state(Parse_State.IN_ATTR_MODIFIER, true);
-				continue;
-			}
-
-			if (char === EQUALS) {
-				set_state(Parse_State.IN_ATTR_VALUE, true);
-				chomp();
-				continue;
-			}
-
-			// process the token and chomp, everything is good
-			(current_node as Property).name += value[index];
-			chomp();
-			continue;
-		}
-
-		// att values can be quoted or unquoted
-		if (current_state === Parse_State.IN_ATTR_VALUE) {
-			// ignore whitespace it is valid after `=`
-
-			if (char === SPACE || char === TAB || char === LINEFEED) {
-				chomp();
-				continue;
-			}
-
-			// quoted attr
-
-			if (char === QUOTE || char === APOSTROPHE) {
-				set_state(Parse_State.IN_QUOTED_ATTR_VALUE, true);
-				quote_type = value[index];
-
-				push_node({type: 'blank'});
-				chomp();
-				continue;
-			}
-
-			set_state(Parse_State.IN_UNQUOTED_ATTR_VALUE, true);
-
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_UNQUOTED_ATTR_VALUE) {
-			// " ", "\n", "/" or ">" => ends the whole thing
-			if (
-				char === SPACE ||
-				char === TAB ||
-				char === LINEFEED ||
-				char === CLOSE_ANGLE_BRACKET ||
-				CLOSING_TAG.test(value.substring(index))
-			) {
-				if (current_node.type === 'text') {
-					if (generate_positions) current_node.position!.end = place();
-					pop_node();
-				}
-
-				pop_state();
-
-				if (generate_positions) current_node.position!.end = place();
-				pop_node();
-				continue;
-			}
-
-			if (char === OPEN_BRACE) {
-				set_state(Parse_State.IN_DYNAMIC_CONTENT);
-				const _n = {
-					type: 'svelte_dynamic_content',
-				} as Svelte_Dynamic_Content;
-
-				(current_node as Property).value.push(_n);
-
-				push_node(_n);
-				// current_node.
-				if (generate_positions) {
-					current_node.position = {start: place(), end: EMPTY_POINT};
-				}
-				chomp();
-				continue;
-			}
-
-			if (current_node.type !== 'text') {
-				const _n: Text = {
-					type: 'text',
-					value: '',
-				};
-
-				(current_node as Property).value.push(_n);
-				push_node(_n);
-				if (generate_positions) {
-					current_node.position = {start: place(), end: EMPTY_POINT};
-				}
-			}
-
-			current_node.value += value[index];
-
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_QUOTED_ATTR_VALUE) {
-			// if we meet our matching quote the attribute has ended
-			if (value[index] === quote_type) {
-				chomp();
-				if (generate_positions) current_node.position!.end = place();
-				pop_node();
-				quote_type = '';
-
-				pop_state();
-
-				if (
-					current_node.type !== 'svelte_element' &&
-					current_node.type !== 'svelte_component' &&
-					current_node.type !== 'svelte_meta'
-				) {
-					if (generate_positions) current_node.position!.end = place();
-					pop_node();
-				}
-
-				continue;
-			}
-
-			if (char === OPEN_BRACE) {
-				if (generate_positions && current_node.type !== 'blank')
-					current_node.position!.end = place();
-				current_node.type !== 'svelte_property' && pop_node();
-
-				_n = {
-					type: 'svelte_dynamic_content',
-				};
-				(current_node as Property).value.push(_n as Svelte_Dynamic_Content);
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				push_node(_n);
-				set_state(Parse_State.IN_DYNAMIC_CONTENT);
-				chomp();
-				continue;
-			}
-
-			if (char === CLOSE_BRACE) {
-				chomp();
-				continue;
-			}
-
-			// " ", "\n" => still in the attribute value but make a new node
-			if (char === SPACE || char === TAB || char === LINEFEED) {
-				const _c = current_node as Text | Svelte_Expression;
-				if (_c.type === 'text' && ONLY_WHITESPACE.test(_c.value)) {
-					_c.value += value[index];
-					chomp();
-					continue;
-				}
-
-				current_node.type !== 'svelte_property' && pop_node();
-				_n = {type: 'text', value: value[index]};
-
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Property).value.push(_n as Text);
-				push_node(_n);
-				chomp();
-				continue;
-			}
-
-			if (value.charCodeAt(index - 1) === CLOSE_BRACE) {
-				current_node.type !== 'svelte_property' && pop_node();
-				_n = {type: 'text', value: value[index]};
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Property).value.push(_n as Text);
-				push_node(_n);
-				chomp();
-				continue;
-			}
-
-			if (
-				(current_node as Text).type === 'text' &&
-				ONLY_WHITESPACE.test((current_node as Text).value)
-			) {
-				pop_node();
-				_n = {type: 'text', value: ''};
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Property).value.push(_n as Text);
-				push_node(_n);
-			} else if (current_node.type === 'blank') {
-				pop_node();
-				_n = {type: 'text', value: ''};
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Property).value.push(_n as Text);
-				push_node(_n);
-			}
-
-			// capture the token otherwise
-			current_node.value += value[index];
-
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_DIRECTIVE_SPECIFIER) {
-			if (char === EQUALS) {
-				set_state(Parse_State.IN_ATTR_VALUE, true);
-				chomp();
-				continue;
-			}
-
-			if (char === PIPE) {
-				_n = {type: 'modifier', value: ''};
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Directive).modifiers.push(_n as Modifier);
-				push_node(_n);
-				set_state(Parse_State.IN_ATTR_MODIFIER, true);
-				chomp();
-				continue;
-			}
-
-			// " ", "\n", "/" or ">" => ends the whole thing
-			if (
-				char === SPACE ||
-				char === TAB ||
-				char === LINEFEED ||
-				char === SLASH ||
-				char === CLOSE_ANGLE_BRACKET
-			) {
-				if (generate_positions) current_node.position!.end = place();
-				pop_state();
-				pop_node();
-				continue;
-			}
-
-			(current_node as Directive).specifier += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_ATTR_MODIFIER) {
-			if (char === PIPE) {
-				pop_node();
-				_n = {type: 'modifier', value: ''};
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Directive).modifiers.push(_n as Modifier);
-				push_node(_n);
-				chomp();
-				continue;
-			}
-
-			if (char === EQUALS) {
-				set_state(Parse_State.IN_ATTR_VALUE, true);
-				pop_node();
-				chomp();
-				continue;
-			}
-
-			if (
-				char === SLASH ||
-				char === CLOSE_ANGLE_BRACKET ||
-				((value.charCodeAt(index - 1) === SPACE ||
-					value.charCodeAt(index - 1) === TAB ||
-					value.charCodeAt(index - 1) === LINEFEED) &&
-					((char >= LOWERCASE_A && char <= LOWERCASE_Z) ||
-						(char >= UPPERCASE_A && char <= UPPERCASE_Z)))
-			) {
-				pop_node();
-				pop_node();
-				pop_state();
-				continue;
-			}
-
-			if (char === SPACE || char === TAB || char === LINEFEED) {
-				chomp();
-				continue;
-			}
-
-			(current_node as Modifier).value += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_SCRIPT_STYLE) {
-			if (char === OPEN_ANGLE_BRACKET) {
-				if (SCRIPT_STYLE.test(value.substring(index))) {
-					if (generate_positions) current_node.position!.end = place();
-					pop_node();
-					set_state(Parse_State.EXPECT_END_OR_BRANCH, true);
-					continue;
-				}
-			}
-
-			(current_node as Svelte_Meta).value += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.PARSE_CHILDREN) {
-			if (
-				(current_node as Svelte_Element | Svelte_Meta).tag === 'script' ||
-				(current_node as Svelte_Element | Svelte_Meta).tag === 'style'
-			) {
-				current_node.type = 'svelteS' + current_node.tag!.substring(1);
-				_n = {
-					type: 'text',
-					value: '',
-				};
-				if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
-				(current_node as Svelte_Meta).children!.push(_n as Text);
-				push_node(_n);
-
-				set_state(Parse_State.IN_SCRIPT_STYLE, true);
-				continue;
 			} else {
-				const result = parser(value.substring(index), parser, generate_positions, position);
-
-				current_node.children = result[0];
-				const _index = position.index! + result[2];
-
-				position = {...result[1]};
-				position.index = _index;
-				index = position.index;
-				char = value.charCodeAt(index);
-			}
-
-			set_state(Parse_State.EXPECT_END_OR_BRANCH, true);
-		}
-
-		if (current_state === Parse_State.EXPECT_END_OR_BRANCH) {
-			if (BLOCK_BRANCH.test(value.substring(index))) {
-				set_state(Parse_State.IN_BRANCHING_BLOCK_BRANCH, true);
-				_n = {
-					type: 'text',
-					value: '',
-				};
-
-				if (generate_positions) {
-					_n.position = {start: place(), end: EMPTY_POINT};
+				const node = this.#parse_node();
+				if (node.type === 'Text' && nodes.length > 0 && nodes[nodes.length - 1].type === 'Text') {
+					const last_node = nodes[nodes.length - 1] as Text_Node;
+					last_node.content += node.content;
+					last_node.end = node.end;
+				} else {
+					nodes.push(node);
 				}
-
-				if (generate_positions) current_node.position!.end = place();
-				push_node(_n);
-				chomp();
-				continue;
 			}
-
-			if (char === OPEN_ANGLE_BRACKET) {
-				chomp();
-				continue;
-			}
-
-			if (char === SLASH) {
-				chomp();
-				continue;
-			}
-
-			if (char === SPACE) {
-				chomp();
-				continue;
-			}
-
-			if (char === CLOSE_ANGLE_BRACKET) {
-				chomp();
-
-				if (generate_positions) {
-					current_node.position!.end = place();
-				}
-
-				let current_node_name = closing_tag;
-
-				if (current_node.type === 'svelte_meta') {
-					current_node_name = current_node_name.replace('svelte:', '');
-				}
-
-				if (current_node_name !== current_node.tag) {
-					// TODO emit errors
-					console.log(
-						`Was expecting a closing tag for ${current_node.tag} but got ${closing_tag}`,
-						JSON.stringify(current_node.position),
-					);
-				}
-
-				break;
-			}
-
-			closing_tag += value[index];
-			chomp();
-			continue;
 		}
-
-		if (current_state === Parse_State.IN_TEXT) {
-			if (char === OPEN_ANGLE_BRACKET || char === OPEN_BRACE) {
-				if (generate_positions) current_node.position!.end = place();
-				break;
-			}
-
-			current_node.value += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_EXPRESSION) {
-			if (expr_quote_type === '' && char === CLOSE_BRACE) {
-				if (brace_count === 0) {
-					if (generate_positions) {
-						current_node.position!.end = place();
-					}
-
-					pop_node();
-					pop_state();
-
-					continue;
-				}
-				brace_count--;
-			}
-
-			if (expr_quote_type === '' && char === OPEN_BRACE) {
-				brace_count++;
-			}
-
-			if (expr_quote_type === '' && (char === APOSTROPHE || char === QUOTE || char === BACKTICK)) {
-				set_state(Parse_State.IN_EXPRESSION_QUOTE);
-				expr_quote_type = value[index];
-				current_node.value += value[index];
-				chomp();
-				continue;
-			}
-
-			current_node.value += value[index];
-			chomp();
-			continue;
-		}
-
-		if (current_state === Parse_State.IN_EXPRESSION_QUOTE) {
-			if (value[index] === expr_quote_type && value.charCodeAt(index - 1) !== BACKSLASH) {
-				expr_quote_type = '';
-				current_node.value += value[index];
-				chomp();
-				pop_state();
-				continue;
-			}
-
-			current_node.value += value[index];
-			chomp();
-			continue;
-		}
-
-		set_state(Parse_State.IN_TEXT);
-		_n = {
-			type: 'text',
-			value: '',
-		};
-
-		push_node(_n);
-		if (generate_positions) _n.position = {start: place(), end: EMPTY_POINT};
+		return nodes;
 	}
 
-	return {
-		chomped: value.substring(0, index),
-		unchomped: value.substring(index),
-		parsed: node_stack[0],
-		position,
-	};
-};
+	#parse_node(): Parsed_Node {
+		if (this.#match('> ')) {
+			return this.#parse_blockquote();
+		} else if (this.#match_list()) {
+			return this.#parse_list(0);
+		} else if (this.#match_code_block()) {
+			return this.#parse_code_block();
+		} else if (this.#match('`')) {
+			return this.#parse_code();
+		} else if (this.#match('*')) {
+			return this.#parse_asterisk();
+		} else if (this.#match('_')) {
+			return this.#parse_underscore();
+		} else if (this.#match('@')) {
+			return this.#parse_mention();
+		} else if (this.#match('#')) {
+			return this.#parse_hashtag();
+		} else if (this.#match('[')) {
+			return this.#parse_markdown_link();
+		} else if (this.#match_global_link()) {
+			return this.#parse_global_link();
+		} else if (this.#match('/')) {
+			return this.#parse_absolute_link();
+		} else if (this.#match('<')) {
+			return this.#parse_regular_element_or_component();
+		} else if (this.#match('{')) {
+			return this.#parse_expression();
+		} else {
+			return this.#parse_text();
+		}
+	}
 
-const TAB = 9; // "\t"
-const LINEFEED = 10; // "\n"
-const SPACE = 32; // " "
-const QUOTE = 34; // "'"
-const OCTOTHERP = 35; // "#"
-const APOSTROPHE = 39; // "'"
-// const DASH = 45; // "-"
-// const DOT = 46; // "."
-const SLASH = 47; // "/"
-const COLON = 58; // ":"
-const OPEN_ANGLE_BRACKET = 60; // "<"
-const EQUALS = 61; // "="
-const CLOSE_ANGLE_BRACKET = 62; // ">"
-const AT = 64; // "@"
-const OPEN_BRACE = 123; // "{"
-const CLOSE_BRACE = 125; // "}"
-const UPPERCASE_A = 65; // "A"
-const UPPERCASE_Z = 90; // "Z"
-const BACKSLASH = 92; // "\"
-const BACKTICK = 96;
-const LOWERCASE_A = 97; // "A"
-const LOWERCASE_Z = 122; // "Z"
-const PIPE = 124; // "|"
-// eslint-disable-next-line require-unicode-regexp
-const BLOCK_BRANCH = /^{\s*(?::|\/)/; // TODO client.ts:112 SyntaxError: Invalid regular expression: /^{\s*(?::|\/)/u: Lone quantifier brackets
-const SCRIPT_STYLE = /^<\/(?:script|style)\s*>/u;
-const COMMENT_START = /^<!--/u;
-const COMMENT_END = /^-->/u;
-const END_TAG_START = /^<\s*\//u;
-const ONLY_WHITESPACE = /^\s*$/u;
+	#parse_list(current_indent: number, parent_indent_text: string = ''): List_Node {
+		const start = this.#index;
+		const items: List_Item_Node[] = [];
+		let indent_text = current_indent === 0 ? '' : parent_indent_text;
 
-const CLOSING_TAG = /^\/\s*>/u;
-const LINE_BREAKS = /\r\n|\r/gu;
-const LINE_FEED = '\n';
+		while (this.#index < this.template.length) {
+			const {indent_chars, effective_indent} = this.#count_leading_whitespace();
 
-const EMPTY_POINT: Point = {
-	line: 0,
-	column: 0,
-	offset: 0,
-};
+			if (this.#match_list_at_indent(effective_indent, current_indent)) {
+				if (current_indent > 0 && indent_text === parent_indent_text) {
+					indent_text += indent_chars.slice(parent_indent_text.length);
+				}
 
-export interface Parse_Result {
-	/**
-	 * The chomped string, what has been parsed. This is a substring of the input value.
-	 */
-	chomped: string;
+				const item_start = this.#index;
+				this.#eat_whitespace();
+				this.#eat('- ');
+				const content_start = this.#index;
 
-	/**
-	 * The unchomped string, what is still left to parse. This is a substring of the input value.
-	 */
-	unchomped: string;
+				let content_end = this.template.indexOf('\n', this.#index);
+				if (content_end === -1) content_end = this.template.length;
 
-	/**
-	 * The AST node. The result of the parse.
-	 */
-	parsed: Base_Tag;
-	/**
-	 * The location in the document where the parse finished. This can be passed back into the parse_node function to maintain positional information on subsequent passes.
-	 */
-	position: Point;
+				const content = this.template.slice(this.#index, content_end);
+				this.#index = content_end;
+
+				const content_parser = new Parser(content);
+				const children = content_parser.parse();
+				children.forEach((node) => this.#adjust_positions(node, content_start));
+
+				const item: List_Item_Node = {
+					type: 'List_Item',
+					children,
+					start: item_start,
+					end: this.#index,
+				};
+
+				items.push(item);
+
+				if (this.#match('\n')) {
+					this.#eat('\n');
+					const {effective_indent: next_effective_indent} = this.#count_leading_whitespace();
+					if (next_effective_indent > effective_indent) {
+						const nested_list = this.#parse_list(next_effective_indent, indent_text);
+						item.children.push(nested_list);
+					} else if (next_effective_indent < effective_indent) {
+						break;
+					}
+				} else {
+					break;
+				}
+			} else {
+				break;
+			}
+		}
+
+		return {
+			type: 'List',
+			start,
+			end: this.#index,
+			items,
+			indent_level: this.#calculate_indent_level(current_indent),
+			indent_text,
+		};
+	}
+
+	#count_leading_whitespace(): {indent_chars: string; effective_indent: number} {
+		let indent_chars = '';
+		let effective_indent = 0;
+		while (this.#index + indent_chars.length < this.template.length) {
+			const char = this.template[this.#index + indent_chars.length];
+			if (char === ' ') {
+				indent_chars += ' ';
+				effective_indent += 1;
+			} else if (char === '\t') {
+				indent_chars += '\t';
+				effective_indent += 2; // Count a tab as 2 spaces for nesting purposes
+			} else {
+				break;
+			}
+		}
+		return {indent_chars, effective_indent};
+	}
+
+	#match_list_at_indent(effective_indent: number, current_indent: number): boolean {
+		if (effective_indent < current_indent) return false;
+		const start_index = this.#index + this.#count_leading_whitespace().indent_chars.length;
+		return this.template.startsWith('- ', start_index);
+	}
+
+	#eat_whitespace(): void {
+		const {indent_chars} = this.#count_leading_whitespace();
+		this.#index += indent_chars.length;
+	}
+
+	#calculate_indent_level(indent: number): number {
+		return Math.floor(indent / 2);
+	}
+
+	#match_code_block(): boolean {
+		return this.#peek_count_consecutive('`') >= 3;
+	}
+
+	#match_list(): boolean {
+		return (
+			(this.#index === 0 || this.template[this.#index - 1] === '\n') &&
+			this.template.startsWith('- ', this.#index)
+		);
+	}
+
+	#parse_code_block(): Code_Block_Node {
+		const start = this.#index;
+
+		const raw_fence = this.#read_consecutive('`');
+
+		let language: string | null = null;
+		let leading_whitespace = '';
+		let content = '';
+		let trailing_whitespace = '';
+
+		const language_start = start + raw_fence.length;
+
+		// Check for language specifier
+		const next_newline = this.template.indexOf('\n', language_start);
+		const next_fence = this.template.indexOf(raw_fence, language_start);
+
+		if (next_newline !== -1 && (next_fence === -1 || next_newline < next_fence)) {
+			// Capture the entire string from immediately after the fence to newline
+			const potential_language = this.template.slice(language_start, next_newline);
+
+			language = potential_language.trim() || null;
+
+			this.#index = next_newline + 1;
+			leading_whitespace = '\n';
+		} else {
+			this.#index = language_start;
+		}
+
+		const content_end = this.template.indexOf(raw_fence, this.#index);
+
+		if (content_end === -1) {
+			content = this.template.slice(this.#index);
+			this.#index = this.template.length;
+		} else {
+			const raw_content = this.template.slice(this.#index, content_end);
+
+			this.#index = content_end + raw_fence.length;
+
+			const match = /^(\s*)([\s\S]*?)(\s*)$/.exec(raw_content);
+			if (match) {
+				leading_whitespace += match[1];
+				content = match[2];
+				trailing_whitespace = match[3];
+			} else {
+				content = raw_content;
+			}
+		}
+
+		// Determine the fence to use in the output
+		const fence =
+			content.trim() === '' && raw_fence.length >= 6 && raw_fence.length % 2 === 0
+				? raw_fence[0].repeat(raw_fence.length / 2)
+				: raw_fence;
+
+		return {
+			type: 'Code_Block',
+			content,
+			language,
+			fence,
+			leading_whitespace,
+			trailing_whitespace,
+			start,
+			end: this.#index,
+		};
+	}
+
+	#parse_code(): Code_Node {
+		const start = this.#index;
+		this.#eat('`');
+		const content_start = this.#index;
+		const content_end = this.template.indexOf('`', this.#index);
+		if (content_end === -1) {
+			throw new Error('Unclosed inline code');
+		}
+		const content = this.template.slice(content_start, content_end);
+		this.#index = content_end + 1;
+		return {type: 'Code', content, start, end: this.#index};
+	}
+
+	#parse_styled_text<T_Node_Type extends 'Bold' | 'Italic'>(
+		char: string,
+		nodeType: T_Node_Type,
+	): (T_Node_Type extends 'Bold' ? Bold_Node : Italic_Node) | Text_Node {
+		const start = this.#index;
+		const count = this.#peek_count_consecutive(char);
+
+		if (count === 1) {
+			this.#eat(char);
+			const children = this.#parse_nodes_until((c) => c === char);
+			if (this.#match(char)) {
+				this.#eat(char);
+				return {
+					type: nodeType,
+					children,
+					start,
+					end: this.#index,
+				} as T_Node_Type extends 'Bold' ? Bold_Node : Italic_Node;
+			} else {
+				this.#index = start;
+				const content = this.template[this.#index];
+				this.#index++;
+				return {type: 'Text', content, start, end: this.#index};
+			}
+		}
+
+		const content = char.repeat(count);
+		this.#index += count;
+		return {type: 'Text', content, start, end: this.#index};
+	}
+
+	#parse_asterisk(): Bold_Node | Text_Node {
+		return this.#parse_styled_text('*', 'Bold');
+	}
+
+	#parse_underscore(): Italic_Node | Text_Node {
+		return this.#parse_styled_text('_', 'Italic');
+	}
+
+	#parse_mention(): Mention_Node {
+		const start = this.#index;
+		this.#eat('@');
+		const name = this.#read_identifier();
+		return {type: 'Mention', name, start, end: this.#index};
+	}
+
+	#parse_hashtag(): Hashtag_Node {
+		const start = this.#index;
+		this.#eat('#');
+		const name = this.#read_identifier();
+		return {type: 'Hashtag', name, start, end: this.#index};
+	}
+
+	#parse_markdown_link(): Markdown_Link_Node | Text_Node {
+		const start = this.#index;
+		this.#eat('[');
+		let content = '';
+		let bracket_count = 1;
+
+		while (this.#index < this.template.length) {
+			const char = this.template[this.#index];
+			this.#index++;
+			content += char;
+
+			if (char === '[') {
+				bracket_count++;
+			} else if (char === ']') {
+				bracket_count--;
+				if (bracket_count === 0 && this.#match('(')) {
+					this.#eat('(');
+					return this.#complete_markdown_link(start, content.slice(0, -1));
+				}
+				if (bracket_count === 0) {
+					return {type: 'Text', content, start, end: this.#index};
+				}
+			}
+		}
+
+		return {type: 'Text', content, start, end: this.#index};
+	}
+
+	#complete_markdown_link(start: number, text_content: string): Markdown_Link_Node | Text_Node {
+		const href_end = this.template.indexOf(')', this.#index);
+		if (href_end === -1) {
+			// No closing parenthesis, treat as plain text
+			this.#index = this.template.length;
+			return {type: 'Text', content: `[${text_content}(`, start, end: this.#index};
+		}
+		const href = this.template.slice(this.#index, href_end);
+		this.#index = href_end + 1;
+		const text_nodes = new Parser(text_content).parse();
+		text_nodes.forEach((node) => this.#adjust_positions(node, start + 1));
+		return {
+			type: 'Markdown_Link',
+			text: text_nodes,
+			href,
+			start,
+			end: this.#index,
+		};
+	}
+
+	#parse_global_link(): Global_Link_Node | Text_Node {
+		const start = this.#index;
+		let href: string;
+		if (this.#match('http://') || this.#match('https://') || this.#match('//')) {
+			href = this.#read_until((c) => /[\s,<>]/.test(c));
+			return {type: 'Global_Link', href, start, end: this.#index};
+		} else {
+			const content = this.template[this.#index];
+			this.#index++;
+			return {type: 'Text', content, start, end: this.#index};
+		}
+	}
+
+	#parse_absolute_link(): Absolute_Link_Node | Text_Node {
+		const start = this.#index;
+		if (this.#match('/')) {
+			this.#eat('/');
+			const href = '/' + this.#read_until((c) => /[\s,<>]/.test(c));
+			return {type: 'Absolute_Link', href, start, end: this.#index};
+		} else {
+			const content = this.template[this.#index];
+			this.#index++;
+			return {type: 'Text', content, start, end: this.#index};
+		}
+	}
+
+	#parse_regular_element_or_component(): Regular_Element_Node | Component_Node {
+		const start = this.#index;
+		this.#eat('<');
+		const tag_name = this.#read_tag_name();
+		const is_component = /^[A-Z]/.test(tag_name);
+
+		const attributes = this.#parse_attributes();
+
+		const whitespace_start = this.#index;
+		this.#skip_whitespace();
+		const has_whitespace = this.#index > whitespace_start;
+
+		let self_closing = false;
+
+		if (this.#match('/>')) {
+			self_closing = true;
+			this.#eat('/>');
+		} else if (this.#match('>')) {
+			this.#eat('>');
+		} else {
+			throw new Error(`Expected '>' or '/>' at index ${this.#index}`);
+		}
+
+		if (self_closing) {
+			return {
+				type: is_component ? 'Component' : 'Regular_Element',
+				name: tag_name,
+				attributes,
+				children: [],
+				start,
+				end: this.#index,
+				self_closing,
+				self_closing_space: has_whitespace,
+				original_syntax: 'html',
+			};
+		} else {
+			const children = this.#parse_nodes_until(() =>
+				this.template.startsWith(`</${tag_name}>`, this.#index),
+			);
+			this.#eat(`</${tag_name}>`);
+			return {
+				type: is_component ? 'Component' : 'Regular_Element',
+				name: tag_name,
+				attributes,
+				children,
+				start,
+				end: this.#index,
+				self_closing: false,
+				self_closing_space: false,
+				original_syntax: 'html',
+			};
+		}
+	}
+
+	#parse_attributes(): Attribute_Node[] {
+		const attributes: Attribute_Node[] = [];
+		while (true) {
+			if (this.#match('>') || this.#match('/>')) {
+				break;
+			}
+
+			const current_index = this.#index;
+			this.#skip_whitespace();
+
+			if (this.#match('>') || this.#match('/>')) {
+				this.#index = current_index;
+				break;
+			}
+
+			const attr_start = this.#index;
+			const name = this.#read_attribute_name();
+			if (!name) {
+				break;
+			}
+
+			let value: Text_Node[] = [];
+			this.#skip_whitespace();
+
+			if (this.#match('=')) {
+				this.#eat('=');
+				this.#skip_whitespace();
+				const quote_char = this.template[this.#index];
+				if (quote_char === '"' || quote_char === "'") {
+					this.#eat(quote_char);
+					const value_start = this.#index;
+					const attribute_value = this.#read_until((c) => c === quote_char);
+					const value_end = this.#index;
+					this.#eat(quote_char);
+					value = [{type: 'Text', content: attribute_value, start: value_start, end: value_end}];
+				} else {
+					const value_start = this.#index;
+					const attribute_value = this.#read_until((c) => /[\s/>]/.test(c));
+					const value_end = this.#index;
+					value = [{type: 'Text', content: attribute_value, start: value_start, end: value_end}];
+				}
+			}
+
+			attributes.push({
+				type: 'Attribute',
+				name,
+				value,
+				start: attr_start,
+				end: this.#index,
+				parent: null,
+			});
+		}
+		return attributes;
+	}
+
+	#parse_expression(): Expression_Node {
+		const start = this.#index;
+		this.#eat('{');
+		const content = this.#read_until((c) => c === '}');
+		this.#eat('}');
+		return {type: 'Expression', content, start, end: this.#index};
+	}
+
+	#parse_text(): Text_Node {
+		const start = this.#index;
+		let content = '';
+		while (this.#index < this.template.length) {
+			if (this.#match_list()) break;
+			const c = this.template[this.#index];
+			if (
+				/[`*_@#<{[]/.test(c) ||
+				this.template.startsWith('http://', this.#index) ||
+				this.template.startsWith('https://', this.#index) ||
+				this.template.startsWith('//', this.#index) ||
+				c === '/'
+			) {
+				break;
+			}
+			content += c;
+			this.#index++;
+		}
+		return {type: 'Text', content, start, end: this.#index};
+	}
+
+	#parse_nodes_until(predicate: (char: string) => boolean): Parsed_Node[] {
+		const nodes: Parsed_Node[] = [];
+		while (this.#index < this.template.length && !predicate(this.template[this.#index])) {
+			const node = this.#parse_node();
+			if (node.type === 'Text' && nodes.length > 0 && nodes[nodes.length - 1].type === 'Text') {
+				const last_node = nodes[nodes.length - 1] as Text_Node;
+				last_node.content += node.content;
+				last_node.end = node.end;
+			} else {
+				nodes.push(node);
+			}
+		}
+		return nodes;
+	}
+
+	#read_attribute_name(): string {
+		const start = this.#index;
+		while (this.#index < this.template.length && !/[\s=/>]/.test(this.template[this.#index])) {
+			this.#index++;
+		}
+		return this.template.slice(start, this.#index);
+	}
+
+	#read_tag_name(): string {
+		const start = this.#index;
+		while (this.#index < this.template.length && !/[\s/>]/.test(this.template[this.#index])) {
+			this.#index++;
+		}
+		return this.template.slice(start, this.#index);
+	}
+
+	#read_identifier(): string {
+		const start = this.#index;
+		while (this.#index < this.template.length && /[a-zA-Z0-9_]/.test(this.template[this.#index])) {
+			this.#index++;
+		}
+		return this.template.slice(start, this.#index);
+	}
+
+	#read_consecutive(char: string): string {
+		const start = this.#index;
+		while (this.#index < this.template.length && this.template[this.#index] === char) {
+			this.#index++;
+		}
+		return this.template.slice(start, this.#index);
+	}
+
+	#skip_whitespace(): void {
+		while (this.#index < this.template.length && /\s/.test(this.template[this.#index])) {
+			this.#index++;
+		}
+	}
+
+	#match_global_link(): boolean {
+		return this.#match('http://') || this.#match('https://') || this.#match('//');
+	}
+
+	#match(str: string): boolean {
+		return this.template.startsWith(str, this.#index);
+	}
+
+	#eat(str: string): void {
+		if (this.#match(str)) {
+			this.#index += str.length;
+		} else {
+			throw new Error(`Expected "${str}" at index ${this.#index}`);
+		}
+	}
+
+	#peek_count_consecutive(char: string): number {
+		let count = 0;
+		let idx = this.#index;
+		while (idx < this.template.length && this.template[idx] === char) {
+			count++;
+			idx++;
+		}
+		return count;
+	}
+
+	#parse_blockquote(): Blockquote_Node {
+		const start = this.#index;
+		const content_start = this.#index;
+		let content = '';
+
+		while (this.#index < this.template.length) {
+			const line_start_index = this.#index;
+
+			// Skip leading spaces or tabs
+			while (
+				this.#index < this.template.length &&
+				(this.template[this.#index] === ' ' || this.template[this.#index] === '\t')
+			) {
+				this.#index++;
+			}
+
+			if (this.#match('> ')) {
+				this.#eat('> ');
+			} else if (this.#match('>')) {
+				this.#eat('>');
+			} else {
+				this.#index = line_start_index;
+				break;
+			}
+
+			const line_content = this.#read_until((c) => c === '\n');
+			content += line_content;
+
+			if (this.#match('\n')) {
+				content += '\n';
+				this.#eat('\n');
+			} else {
+				break;
+			}
+		}
+
+		if (content.endsWith('\n')) {
+			content = content.slice(0, -1);
+		}
+
+		const content_parser = new Parser(content);
+		const children = content_parser.parse();
+
+		children.forEach((node) => this.#adjust_positions(node, content_start));
+
+		const end = this.#index;
+
+		return {
+			type: 'Blockquote',
+			children,
+			start,
+			end,
+			original_syntax: 'markdown',
+		};
+	}
+
+	#read_until(predicate: (char: string) => boolean): string {
+		let result = '';
+		while (this.#index < this.template.length && !predicate(this.template[this.#index])) {
+			result += this.template[this.#index];
+			this.#index++;
+		}
+		return result;
+	}
+
+	#adjust_positions(node: Parsed_Node, offset: number): void {
+		node.start += offset;
+		node.end += offset;
+
+		if ('children' in node && Array.isArray(node.children)) {
+			node.children.forEach((child) => this.#adjust_positions(child, offset));
+		}
+		if ('value' in node && Array.isArray(node.value)) {
+			node.value.forEach((child) => this.#adjust_positions(child, offset));
+		}
+		if ('attributes' in node && Array.isArray(node.attributes)) {
+			node.attributes.forEach((attr) => this.#adjust_positions(attr, offset));
+		}
+		if ('text' in node && Array.isArray(node.text)) {
+			node.text.forEach((textNode) => this.#adjust_positions(textNode, offset));
+		}
+	}
 }
-
-export interface Parse_Options {
-	/**
-	 * Generate positional data
-	 */
-	generate_positions: boolean;
-}
-
-export const enum Parse_State {
-	IN_START_TAG,
-	IN_TAG_NAME,
-	IN_TAG_BODY,
-	IN_SHORTHAND_ATTR,
-	IN_ATTR_NAME,
-	IN_DIRECTIVE_SPECIFIER,
-	IN_ATTR_MODIFIER,
-	START_ATTR_VALUE,
-	IN_ATTR_VALUE,
-	IN_UNQUOTED_ATTR_VALUE,
-	IN_QUOTED_ATTR_VALUE,
-	IN_ATTR_EXPRESSION,
-	IN_CLOSING_SLASH,
-	IN_CLOSE_TAG,
-	IN_DYNAMIC_CONTENT,
-	IN_EXPRESSION,
-	PARSE_CHILDREN,
-	EXPECT_END_OR_BRANCH,
-	IN_TEXT,
-	IN_EXPRESSION_QUOTE,
-	MAYBE_IN_DYNAMIC_CONTENT,
-	IN_VOID_BLOCK,
-	IN_BRANCHING_BLOCK,
-	IN_BRANCHING_BLOCK_BRANCH,
-	IN_BRANCHING_BLOCK_END,
-	IN_BRANCHING_BLOCK_NAME,
-	IN_BRANCHING_BLOCK_BRANCH_NAME,
-	IN_SCRIPT_STYLE,
-	IN_COMMENT,
-}
-
-export const void_els: Set<string> = new Set([
-	'area',
-	'base',
-	'basefont',
-	'bgsound',
-	'br',
-	'col',
-	'command',
-	'embed',
-	'frame',
-	'hr',
-	'image',
-	'img',
-	'input',
-	'isindex',
-	'keygen',
-	'link',
-	'menuitem',
-	'meta',
-	'nextid',
-	'param',
-	'source',
-	'track',
-	'wbr',
-]);

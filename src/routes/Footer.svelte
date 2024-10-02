@@ -1,10 +1,18 @@
 <script lang="ts">
-	import Github_Logo from '@ryanatkn/fuz/Github_Logo.svelte';
+	import Svg from '@ryanatkn/fuz/Svg.svelte';
+	import {github_logo} from '@ryanatkn/fuz/logos.js';
+	import type {Snippet} from 'svelte';
+
+	interface Props {
+		logo?: Snippet;
+	}
+
+	const {logo}: Props = $props();
 </script>
 
 <footer class="logo box">
 	<a href="https://github.com/ryanatkn/end-user-markdown-sketch"
-		><slot name="logo"><Github_Logo /></slot></a
+		>{#if logo}{@render logo()}{:else}<Svg data={github_logo} />{/if}</a
 	>
 </footer>
 

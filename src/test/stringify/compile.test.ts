@@ -32,7 +32,7 @@ import * as assert from 'uvu/assert';
 import {table_without_positions} from './fixtures/table_without_positions.js';
 import {table_output} from './fixtures/table_output.js';
 import type {Markdown_Root} from '$lib/markdown.js';
-import {stringify_markdown} from '$lib/stringify_markdown.js';
+import {stringify_markdown} from '$lib/old_stringify_markdown.js';
 
 const test__stringify_markdown = suite('compile-tree');
 

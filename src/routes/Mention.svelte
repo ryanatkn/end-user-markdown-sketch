@@ -1,16 +1,18 @@
 <script lang="ts">
 	// TODO this is just a hacky proof of concept
 
-	import {get_contextmenu} from '@ryanatkn/fuz/contextmenu.js';
+	import {contextmenu_action} from '@ryanatkn/fuz/contextmenu_state.svelte.js';
 
 	import {greet_actor} from '$routes/contextmenu_helpers.js'; // TODO hacky, shouldn't have a dep in $routes and we could move it to $lib
 
-	const contextmenu = get_contextmenu();
-
 	// TODO should there but a get_markdown_context?
 
-	export let name: string;
-	export let inline = true;
+	interface Props {
+		name: string;
+		inline?: boolean;
+	}
+
+	const {name, inline = true}: Props = $props();
 
 	// TODO hacky
 	const onclick = () => {
@@ -22,11 +24,11 @@
 <span
 	class="mention"
 	class:inline
-	use:contextmenu.action={greet_actor(name)}
+	use:contextmenu_action={greet_actor(name)}
 	role="button"
 	tabindex="0"
-	on:keydown={undefined}
-	on:click={onclick}>@{name}</span
+	onkeydown={undefined}
+	{onclick}>@{name}</span
 >
 
 <style>

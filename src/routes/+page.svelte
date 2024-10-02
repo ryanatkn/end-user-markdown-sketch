@@ -6,9 +6,10 @@
 	import Markdown_Playground from '$lib/Markdown_Playground.svelte';
 	import Markdown from '$lib/Markdown.svelte';
 	import Markdown_Example from '$routes/Markdown_Example.svelte';
-	import {ALLOWED_HTML_ATTRS, get_components} from '$lib/view';
+	import {ALLOWED_HTML_ATTRS} from '$lib/view.js';
+	import {components_context} from '$routes/components.js';
 
-	const components = get_components();
+	const components = components_context.get();
 </script>
 
 <main class="prose width_md">
@@ -323,10 +324,12 @@
 				<Markdown_Example content={`<Hashtag name="this" /> is equivalent to #this`} />
 				<Markdown_Example content={`<Missing /> components are called out`}>
 					<p>If a component isn't found, it renders a fallback that preserves the source text:</p>
-					<p slot="after">
-						Perhaps an optional Svelte component can be provided for missing components, and
-						plaintext is rendered if none is provided.
-					</p>
+					{#snippet after()}
+						<p>
+							Perhaps an optional Svelte component can be provided for missing components, and
+							plaintext is rendered if none is provided.
+						</p>
+					{/snippet}
 				</Markdown_Example>
 			</section>
 		</section>
