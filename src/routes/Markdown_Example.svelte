@@ -16,7 +16,7 @@
 <div class="markdown_text_example panel">
 	{@render children?.()}
 	<Code {content} />
-	<p class="prose">
+	<p>
 		<Markdown {content} />
 	</p>
 	{@render after?.()}
@@ -27,7 +27,7 @@
 		background-color: var(--bg);
 		display: flex;
 		flex-direction: column;
-		margin-bottom: var(--spacing_lg);
-		padding: var(--spacing_sm);
+		margin-bottom: var(--space_lg);
+		padding: var(--space_sm);
 	}
 </style>

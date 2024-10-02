@@ -18,12 +18,14 @@
 
 <style>
 	footer {
-		margin: var(--spacing_7) 0;
+		margin: var(--space_xl7) 0;
 	}
 	.logo {
 		display: flex;
 	}
 	.logo a {
+		width: var(--icon_size_lg);
+		height: var(--icon_size_lg);
 		--border_width: var(--border_width_4);
 		--border_color: transparent;
 		text-decoration: none;

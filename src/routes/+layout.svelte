@@ -1,6 +1,6 @@
 <script lang="ts">
-	import '@ryanatkn/fuz/style.css';
-	import '@ryanatkn/fuz/theme.css';
+	import '@ryanatkn/moss/style.css';
+	import '@ryanatkn/moss/theme.css';
 	import '@ryanatkn/fuz_code/prism.css';
 	import '$routes/style.css';
 
@@ -61,7 +61,6 @@
 	<Contextmenu_Root>
 		<Header />
 		{@render children()}
-
 		{#if show_settings}
 			<Dialog onclose={() => (show_settings = false)}>
 				<div class="pane">

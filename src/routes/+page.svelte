@@ -12,9 +12,9 @@
 	const components = components_context.get();
 </script>
 
-<main class="prose width_md">
+<main class="width_md">
 	<div class="width_full">
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<div class="panel_inner">
 				<h2 id="motivation">Motivation</h2>
 				<p>
@@ -65,9 +65,9 @@
 				</aside>
 			</div>
 		</section>
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<div class="panel_inner">
-				<div class="prose">
+				<div>
 					<h2 id="playground">Playground</h2>
 					<p>
 						These examples are specific to this context's configuration. Each feature is optional
@@ -78,7 +78,7 @@
 					<br />
 				</div>
 				<Markdown_Playground />
-				<div class="prose">
+				<div>
 					<aside>
 						tip: try opening the contextmenu on <Markdown content="@fox" /> and <Markdown
 							content="@dog"
@@ -92,7 +92,7 @@
 			</div>
 		</section>
 
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<section class="panel_inner">
 				<h2 id="extensibility">Extensibility</h2>
 				<p>
@@ -133,7 +133,7 @@
 			</section>
 		</section>
 
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<section class="panel_inner">
 				<h2 id="examples">Examples</h2>
 				<aside>
@@ -334,7 +334,7 @@
 			</section>
 		</section>
 
-		<section class="panel padded_md section_xl">
+		<section class="panel p_md section_xl">
 			<section class="panel_inner">
 				<h2 id="discussions">Discussions</h2>
 				<ul>
@@ -363,9 +363,9 @@
 	}
 
 	.panel_inner {
-		padding: var(--spacing_md);
+		padding: var(--space_md);
 		background-color: var(--bg);
-		border-radius: var(--border_radius_xs);
+		border-radius: var(--radius_xs);
 	}
 
 	/* TODO these are all hacky, is a recurring issue */
@@ -376,9 +376,9 @@
 		margin-bottom: 0 !important;
 	}
 	.section_lg.section_lg {
-		margin-bottom: var(--spacing_6);
+		margin-bottom: var(--space_6);
 	}
 	.section_xl.section_xl {
-		margin-bottom: var(--spacing_8);
+		margin-bottom: var(--space_8);
 	}
 </style>

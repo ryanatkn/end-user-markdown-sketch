@@ -23,7 +23,7 @@
 
 <div class="playground">
 	<textarea bind:value></textarea>
-	<div class="preview prose">
+	<div class="preview">
 		<!-- TODO is super hacky, remove the loop when the parser is fixed -->
 		{#each contents as content}<div class="spaced"><Markdown {content} /></div>{/each}
 	</div>
@@ -32,7 +32,7 @@
 <style>
 	.playground {
 		display: flex;
-		gap: var(--spacing_md);
+		gap: var(--space_md);
 		flex-wrap: wrap;
 	}
 	textarea {

@@ -59,5 +59,8 @@
         }
       }
     ]
+  },
+  "dependencies": {
+    "@ryanatkn/moss": "^0.16.1"
   }
 }

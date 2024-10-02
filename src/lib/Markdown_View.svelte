@@ -30,7 +30,7 @@
 		{:then Component}
 			<Component {...node_props}>
 				{#if view.children}
-					{@render renderChildren(view.children)}
+					{@render child_nodes(view.children)}
 				{/if}
 			</Component>
 		{/await}
@@ -38,9 +38,13 @@
 		<code class="error_text">{'<'}{view.name}{' />'}</code>
 	{/if}
 {:else if view.type === 'Regular_Element'}
-	<svelte:element this={view.name} {...node_props}>
-		{@render renderChildren(view.children)}
-	</svelte:element>
+	{#if view.self_closing}
+		<svelte:element this={view.name} {...node_props} />
+	{:else}
+		<svelte:element this={view.name} {...node_props}>
+			{@render child_nodes(view.children)}
+		</svelte:element>
+	{/if}
 {:else if view.type === 'Text'}
 	{view.content}
 {:else if view.type === 'Code'}
@@ -48,9 +52,9 @@
 {:else if view.type === 'Code_Block'}
 	<pre><code class={view.language}>{view.content}</code></pre>
 {:else if view.type === 'Bold'}
-	<strong>{@render renderChildren(view.children)}</strong>
+	<strong>{@render child_nodes(view.children)}</strong>
 {:else if view.type === 'Italic'}
-	<em>{@render renderChildren(view.children)}</em>
+	<em>{@render child_nodes(view.children)}</em>
 {:else if view.type === 'Mention'}
 	<!-- TODO uses a different loading pattern, lazy load with same pattern? -->
 	<Mention name={view.name} />
@@ -64,20 +68,20 @@
 {:else if view.type === 'Expression'}
 	{view.content}
 {:else if view.type === 'Markdown_Link'}
-	<a href={view.href}>{@render renderChildren(view.text)}</a>
+	<a href={view.href}>{@render child_nodes(view.text)}</a>
 {:else if view.type === 'Blockquote'}
-	<blockquote>{@render renderChildren(view.children)}</blockquote>
+	<blockquote>{@render child_nodes(view.children)}</blockquote>
 {:else if view.type === 'List'}
 	<ul>
 		{#each view.items as item}
-			<li>{@render renderChildren(item.children)}</li>
+			<li>{@render child_nodes(item.children)}</li>
 		{/each}
 	</ul>
 {:else}
 	<span class="error_text">Unknown node type: {view.type}</span>
 {/if}
 
-{#snippet renderChildren(children: Parsed_Node[])}
+{#snippet child_nodes(children: Parsed_Node[])}
 	{#each children as child}
 		<Markdown_View view={child} />
 	{/each}

@@ -3,7 +3,7 @@
 	import {page} from '$app/stores';
 </script>
 
-<div class="box prose">
+<div class="box">
 	<p>/{$page.params.slug}</p>
 	<p><a href="{base}/">go home</a></p>
 </div>
