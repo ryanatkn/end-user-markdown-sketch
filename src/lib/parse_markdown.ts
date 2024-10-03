@@ -1,5 +1,4 @@
 /*
-
 parse_markdown.ts
 
 Parser for a custom language that extends
@@ -8,9 +7,9 @@ Svelte and HTML with some Markdown and Markdown-like features.
 ## Features
 
 - bold text is implemented with *single asterisks* -
-	double asterisks like **this** are plain text
+    double asterisks like **this** are plain text
 - italics are implemented with _single underscores_ -
-	like with asterisks, double underscores like __this__ are plain text
+    like with asterisks, double underscores like __this__ are plain text
 - prefixes are supported like @mentions and #hashtags and /absolute_links and //global_links
 - Windows is ignored, so carriage returns like `\r\n` are not used, only `\n`
 
@@ -22,6 +21,7 @@ generated code MUST use the `#` prefix and NOT the `private` keyword.
 All identifiers use `snake_case` including `Title_Snakes` for type and class names.
 
 */
+
 export const parse_markdown = (text: string): Parsed_Node[] => new Parser(text).parse();
 
 export type Parsed_Node =
@@ -110,7 +110,7 @@ export interface Component_Node extends Base_Node {
 	children: Parsed_Node[];
 	self_closing: boolean;
 	self_closing_space: string | null;
-	original_syntax: 'html' | 'markdown';
+	original_syntax: 'html';
 }
 
 export interface Expression_Node extends Base_Node {
@@ -155,49 +155,52 @@ export interface List_Item_Node extends Base_Node {
 
 export class Parser {
 	#index: number = 0;
+	#accumulated_text: string = '';
+	#accumulated_start: number = 0;
+	#nodes: Parsed_Node[] = [];
 
 	constructor(protected template: string) {}
 
 	parse(): Parsed_Node[] {
-		const nodes: Parsed_Node[] = [];
+		this.#nodes = [];
 		while (this.#index < this.template.length) {
-			if (this.#match_list()) {
-				const list = this.#parse_list(0);
-				nodes.push(list);
-
-				// After parsing a list, consume any remaining blank lines and add them as Text nodes
-				let newlines = '';
-				while (this.#match('\n')) {
-					newlines += '\n';
-					this.#eat('\n');
-				}
-				if (newlines) {
-					nodes.push({
-						type: 'Text',
-						content: newlines,
-						start: this.#index - newlines.length,
-						end: this.#index,
-					});
-				}
+			const node = this.#parse_node();
+			if (node.type === 'Text') {
+				this.#accumulate_text(node.content, node.start);
 			} else {
-				const node = this.#parse_node();
-				if (node.type === 'Text' && nodes.length > 0 && nodes[nodes.length - 1].type === 'Text') {
-					const last_node = nodes[nodes.length - 1] as Text_Node;
-					last_node.content += node.content;
-					last_node.end = node.end;
-				} else {
-					nodes.push(node);
-				}
+				this.#flush_accumulated_text();
+				this.#nodes.push(node);
 			}
 		}
-		return nodes;
+		this.#flush_accumulated_text();
+		return this.#nodes;
+	}
+
+	#accumulate_text(text: string, start: number): void {
+		if (this.#accumulated_text === '') {
+			this.#accumulated_start = start;
+		}
+		this.#accumulated_text += text;
+	}
+
+	#flush_accumulated_text(): void {
+		if (this.#accumulated_text !== '') {
+			this.#nodes.push({
+				type: 'Text',
+				content: this.#accumulated_text,
+				start: this.#accumulated_start,
+				end: this.#accumulated_start + this.#accumulated_text.length,
+			});
+			this.#accumulated_text = '';
+		}
 	}
 
 	#parse_node(): Parsed_Node {
-		if (this.#match('> ')) {
-			return this.#parse_blockquote();
-		} else if (this.#match_list()) {
+		if (this.#match_list()) {
+			this.#flush_accumulated_text();
 			return this.#parse_list(0);
+		} else if (this.#match('> ')) {
+			return this.#parse_blockquote();
 		} else if (this.#match_code_block()) {
 			return this.#parse_code_block();
 		} else if (this.#match('`')) {
@@ -229,6 +232,9 @@ export class Parser {
 		const start = this.#index;
 		const items: List_Item_Node[] = [];
 		let indent_text = current_indent === 0 ? '' : parent_indent_text;
+		let end = start;
+
+		this.#flush_accumulated_text();
 
 		while (this.#index < this.template.length) {
 			const {indent_chars, effective_indent} = this.#count_leading_whitespace();
@@ -240,7 +246,7 @@ export class Parser {
 
 				const item_start = this.#index;
 				this.#eat_whitespace();
-				this.#eat('- ');
+				this.#eat_list_marker();
 				const content_start = this.#index;
 
 				let content_end = this.template.indexOf('\n', this.#index);
@@ -264,14 +270,18 @@ export class Parser {
 
 				if (this.#match('\n')) {
 					this.#eat('\n');
+					end = this.#index;
+
 					const {effective_indent: next_effective_indent} = this.#count_leading_whitespace();
 					if (next_effective_indent > effective_indent) {
 						const nested_list = this.#parse_list(next_effective_indent, indent_text);
 						item.children.push(nested_list);
+						end = nested_list.end;
 					} else if (next_effective_indent < effective_indent) {
 						break;
 					}
 				} else {
+					end = this.#index;
 					break;
 				}
 			} else {
@@ -282,11 +292,70 @@ export class Parser {
 		return {
 			type: 'List',
 			start,
-			end: this.#index,
+			end,
 			items,
 			indent_level: this.#calculate_indent_level(current_indent),
 			indent_text,
 		};
+	}
+
+	#parse_text(): Text_Node {
+		const start = this.#index;
+		let content = '';
+		while (this.#index < this.template.length) {
+			if (this.#match_list()) break;
+			const c = this.template[this.#index];
+			if (
+				/[`*_@#<{[]/.test(c) ||
+				this.template.startsWith('http://', this.#index) ||
+				this.template.startsWith('https://', this.#index) ||
+				this.template.startsWith('//', this.#index) ||
+				c === '/'
+			) {
+				break;
+			}
+			content += c;
+			this.#index++;
+		}
+		return {type: 'Text', content, start, end: this.#index};
+	}
+
+	#eat_list_marker(): void {
+		if (
+			this.template[this.#index] === '-' ||
+			this.template[this.#index] === '+' ||
+			this.template[this.#index] === '*'
+		) {
+			this.#index += 2;
+		} else if (/\d/.test(this.template[this.#index])) {
+			while (/\d/.test(this.template[this.#index])) {
+				this.#index++;
+			}
+			if (this.template[this.#index] === '.' || this.template[this.#index] === ')') {
+				this.#index += 2;
+			}
+		}
+	}
+
+	#match_list(): boolean {
+		return (
+			(this.#index === 0 || this.template[this.#index - 1] === '\n') &&
+			(this.template.startsWith('- ', this.#index) ||
+				this.template.startsWith('+ ', this.#index) ||
+				this.template.startsWith('* ', this.#index) ||
+				/^\d+\.( |\))/.test(this.template.slice(this.#index)))
+		);
+	}
+
+	#match_list_at_indent(effective_indent: number, current_indent: number): boolean {
+		if (effective_indent < current_indent) return false;
+		const start_index = this.#index + this.#count_leading_whitespace().indent_chars.length;
+		return (
+			this.template.startsWith('- ', start_index) ||
+			this.template.startsWith('+ ', start_index) ||
+			this.template.startsWith('* ', start_index) ||
+			/^\d+\.( |\))/.test(this.template.slice(start_index))
+		);
 	}
 
 	#count_leading_whitespace(): {indent_chars: string; effective_indent: number} {
@@ -299,7 +368,7 @@ export class Parser {
 				effective_indent += 1;
 			} else if (char === '\t') {
 				indent_chars += '\t';
-				effective_indent += 2; // Count a tab as 2 spaces for nesting purposes
+				effective_indent += 2;
 			} else {
 				break;
 			}
@@ -307,15 +376,21 @@ export class Parser {
 		return {indent_chars, effective_indent};
 	}
 
-	#match_list_at_indent(effective_indent: number, current_indent: number): boolean {
-		if (effective_indent < current_indent) return false;
-		const start_index = this.#index + this.#count_leading_whitespace().indent_chars.length;
-		return this.template.startsWith('- ', start_index);
-	}
-
 	#eat_whitespace(): void {
 		const {indent_chars} = this.#count_leading_whitespace();
 		this.#index += indent_chars.length;
+	}
+
+	#eat(str: string): void {
+		if (this.#match(str)) {
+			this.#index += str.length;
+		} else {
+			throw new Error(`Expected "${str}" at index ${this.#index}`);
+		}
+	}
+
+	#match(str: string): boolean {
+		return this.template.startsWith(str, this.#index);
 	}
 
 	#calculate_indent_level(indent: number): number {
@@ -324,13 +399,6 @@ export class Parser {
 
 	#match_code_block(): boolean {
 		return this.#peek_count_consecutive('`') >= 3;
-	}
-
-	#match_list(): boolean {
-		return (
-			(this.#index === 0 || this.template[this.#index - 1] === '\n') &&
-			this.template.startsWith('- ', this.#index)
-		);
 	}
 
 	#parse_code_block(): Code_Block_Node {
@@ -345,12 +413,10 @@ export class Parser {
 
 		const language_start = start + raw_fence.length;
 
-		// Check for language specifier
 		const next_newline = this.template.indexOf('\n', language_start);
 		const next_fence = this.template.indexOf(raw_fence, language_start);
 
 		if (next_newline !== -1 && (next_fence === -1 || next_newline < next_fence)) {
-			// Capture the entire string from immediately after the fence to newline
 			const potential_language = this.template.slice(language_start, next_newline);
 
 			language = potential_language.trim() || null;
@@ -381,7 +447,6 @@ export class Parser {
 			}
 		}
 
-		// Determine the fence to use in the output
 		const fence =
 			content.trim() === '' && raw_fence.length >= 6 && raw_fence.length % 2 === 0
 				? raw_fence[0].repeat(raw_fence.length / 2)
@@ -691,27 +756,6 @@ export class Parser {
 		return {type: 'Expression', content, start, end: this.#index};
 	}
 
-	#parse_text(): Text_Node {
-		const start = this.#index;
-		let content = '';
-		while (this.#index < this.template.length) {
-			if (this.#match_list()) break;
-			const c = this.template[this.#index];
-			if (
-				/[`*_@#<{[]/.test(c) ||
-				this.template.startsWith('http://', this.#index) ||
-				this.template.startsWith('https://', this.#index) ||
-				this.template.startsWith('//', this.#index) ||
-				c === '/'
-			) {
-				break;
-			}
-			content += c;
-			this.#index++;
-		}
-		return {type: 'Text', content, start, end: this.#index};
-	}
-
 	#parse_nodes_until(predicate: (char: string) => boolean): Parsed_Node[] {
 		const nodes: Parsed_Node[] = [];
 		while (this.#index < this.template.length && !predicate(this.template[this.#index])) {
@@ -767,18 +811,6 @@ export class Parser {
 
 	#match_global_link(): boolean {
 		return this.#match('http://') || this.#match('https://') || this.#match('//');
-	}
-
-	#match(str: string): boolean {
-		return this.template.startsWith(str, this.#index);
-	}
-
-	#eat(str: string): void {
-		if (this.#match(str)) {
-			this.#index += str.length;
-		} else {
-			throw new Error(`Expected "${str}" at index ${this.#index}`);
-		}
 	}
 
 	#peek_count_consecutive(char: string): number {
