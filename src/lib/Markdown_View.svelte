@@ -41,7 +41,7 @@
 	{:else}
 		<code class="error_text">{'<'}{view.name}{' />'}</code>
 	{/if}
-{:else if view.type === 'Regular_Element'}
+{:else if view.type === 'Element'}
 	{#if view.self_closing}
 		<svelte:element this={view.name} {...node_props} />
 	{:else}
