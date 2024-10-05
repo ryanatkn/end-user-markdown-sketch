@@ -23,6 +23,8 @@
 	);
 
 	const node_props = $derived(to_view_props(view));
+
+	// TODO consider passing through optional `children`
 </script>
 
 {#if view.type === 'Component'}

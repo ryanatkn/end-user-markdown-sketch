@@ -65,6 +65,38 @@
 				</aside>
 			</div>
 		</section>
+
+		<section class="panel p_md section_xl">
+			<section class="panel_inner">
+				<h2 id="key-features">Key features</h2>
+				<ul>
+					<li>
+						customizable - features are optional and exposed through configuation, and rendering is
+						pluggable
+					</li>
+					<li>
+						extensible - new features can be added by end-users and developers through
+						configuration, using a set of supported syntaxes for cases like @mentions and ~whatever~
+					</li>
+					<li>
+						powerful - renders HTML, *markdownisms*, and Svelte components with props and
+						composition (no JS/expressions yet but could eventually support all/most of Svelte I
+						think?)
+					</li>
+					<li>
+						user-friendly - the default configuration and main Svelte renderer behave more like the
+						markdowns of Slack and Discord than traditional dev-friendly markdowns, preserving the
+						more common user expectation for newlines and making bold text a single *
+					</li>
+					<li>
+						dev-friendly - renderers like the main HTML/Svelte one may ignore some whitespace but
+						parsing+printing any text reproduces it character-for-character, so it's stable to edit
+						as data and formatting isn't a thing
+					</li>
+				</ul>
+			</section>
+		</section>
+
 		<section class="panel p_md section_xl">
 			<div class="panel_inner">
 				<div>
