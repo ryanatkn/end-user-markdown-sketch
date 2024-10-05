@@ -2,14 +2,6 @@
 	import {base} from '$app/paths';
 	import 'prismjs'; // TODO shouldn't be needed
 	import Code from '@ryanatkn/fuz_code/Code.svelte';
-	import {parse} from 'svelte/compiler';
-
-	console.log(`Svelte parse`, parse);
-	window.parse = parse;
-	console.log(
-		'Svelte parse(`<Markdown text="hey @you *lol*" />`)',
-		parse(`<Markdown text="hey @you *lol*" />`, {filename: 'testing.md', modern: true}),
-	);
 
 	import Markdown_Playground from '$lib/Markdown_Playground.svelte';
 	import Markdown from '$lib/Markdown.svelte';

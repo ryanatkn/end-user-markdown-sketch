@@ -3,8 +3,6 @@
 	import Markdown from '$lib/Markdown.svelte';
 	import Markdown_Playground from '$lib/Markdown_Playground.svelte';
 
-	let current_time = new Date().toLocaleTimeString();
-
 	setInterval(() => {
 		current_time = new Date().toLocaleTimeString();
 	}, 1000);
