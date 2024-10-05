@@ -26,71 +26,71 @@
 					<li>
 						<strong>Bold Text</strong>: Implemented using single asterisks. For example, <Code
 							content="*bold text*"
-						/> renders as <Markdown content="*bold text*" />.
+						/> renders as <Markdown text="*bold text*" />.
 					</li>
 					<li>
 						<em>Italic Text</em>: Implemented using single underscores. For example, <Code
 							content="_italic text_"
-						/> renders as <Markdown content="_italic text_" />.
+						/> renders as <Markdown text="_italic text_" />.
 					</li>
 					<li>
 						<strong>Mentions</strong>: Prefixed with <code>@</code>. For example, <Code
 							content="@username"
-						/> renders as <Markdown content="@username" />.
+						/> renders as <Markdown text="@username" />.
 					</li>
 					<li>
 						<strong>Hashtags</strong>: Prefixed with <code>#</code>. For example, <Code
 							content="#hashtag"
-						/> renders as <Markdown content="#hashtag" />.
+						/> renders as <Markdown text="#hashtag" />.
 					</li>
 					<li>
 						<strong>Absolute Links</strong>: Starting with <code>/</code>. For example, <Code
 							content="/path/to/resource"
-						/> renders as <Markdown content="/path/to/resource" />.
+						/> renders as <Markdown text="/path/to/resource" />.
 					</li>
 					<li>
 						<strong>Global Links</strong>: Starting with <code>//</code>, <code>http://</code>, or
 						<code>https://</code>. For example, <Code content="https://example.com" /> renders as <Markdown
-							content="https://example.com"
+							text="https://example.com"
 						/>.
 					</li>
 					<li>
 						<strong>Inline Code</strong>: Wrapped with backticks. For example, <Code
 							content="\`code\`"
-						/> renders as <Markdown content="\`code\`" />.
+						/> renders as <Markdown text="\`code\`" />.
 					</li>
 					<li>
 						<strong>Code Blocks</strong>: Wrapped with triple backticks. For example:
 						<Code content={`\`\`\`\ncode block\n\`\`\``} />
 						renders as:
-						<Markdown content={`\`\`\`\ncode block\n\`\`\``} />
+						<Markdown text={`\`\`\`\ncode block\n\`\`\``} />
 					</li>
 					<li>
 						<strong>Blockquotes</strong>: Lines starting with <code>></code>. For example, <Code
 							content="> quoted text"
-						/> renders as <Markdown content="> quoted text" />.
+						/> renders as <Markdown text="> quoted text" />.
 					</li>
 					<li>
 						<strong>Lists</strong>: Lines starting with <code>- </code>. For example:
 						<Code content="- item 1\n- item 2" />
 						renders as:
-						<Markdown content="- item 1\n- item 2" />
+						<Markdown text="- item 1\n- item 2" />
 					</li>
 					<li>
 						<strong>HTML Elements</strong>: Standard HTML tags. For example, <Code
 							content="<div>content</div>"
-						/> renders as <Markdown content="<div>content</div>" />.
+						/> renders as <Markdown text="<div>content</div>" />.
 					</li>
 					<li>
 						<strong>Svelte Components</strong>: Custom components with capitalized names. For
 						example, <Code content="<Component>content</Component>" /> renders as <Markdown
-							content="<Component>content</Component>"
+							text="<Component>content</Component>"
 						/>.
 					</li>
 					<li>
 						<strong>Expressions</strong>: Wrapped with curly braces. For example, <Code
 							content={'{expression}'}
-						/> renders as <Markdown content={'{expression}'} />.
+						/> renders as <Markdown text={'{expression}'} />.
 					</li>
 				</ul>
 			</div>
@@ -106,7 +106,7 @@
 				</p>
 				<Code content="*bold text*" />
 				<p>renders as:</p>
-				<Markdown content="*bold text*" />
+				<Markdown text="*bold text*" />
 				<p>
 					Note that double asterisks <Code content="**not bold**" /> are treated as plain text.
 				</p>
@@ -118,7 +118,7 @@
 				</p>
 				<Code content="_italic text_" />
 				<p>renders as:</p>
-				<Markdown content="_italic text_" />
+				<Markdown text="_italic text_" />
 				<p>
 					Double underscores <Code content="__not italic__" /> are treated as plain text.
 				</p>
@@ -130,7 +130,7 @@
 				</p>
 				<Code content="@username #hashtag" />
 				<p>renders as:</p>
-				<Markdown content="@username #hashtag" />
+				<Markdown text="@username #hashtag" />
 
 				<h3>Links</h3>
 				<p>
@@ -139,11 +139,11 @@
 				</p>
 				<Code content="/path/to/resource" />
 				<p>renders as:</p>
-				<Markdown content="/path/to/resource" />
+				<Markdown text="/path/to/resource" />
 
 				<Code content="https://example.com" />
 				<p>renders as:</p>
-				<Markdown content="https://example.com" />
+				<Markdown text="https://example.com" />
 
 				<h3>Inline Code and Code Blocks</h3>
 				<p>
@@ -151,14 +151,14 @@
 				</p>
 				<Code content="\`inline code\`" />
 				<p>renders as:</p>
-				<Markdown content="\`inline code\`" />
+				<Markdown text="\`inline code\`" />
 
 				<p>
 					Code blocks are wrapped with triple backticks <code>```</code>. For example:
 				</p>
 				<Code content={`\`\`\`\ncode block\n\`\`\``} />
 				<p>renders as:</p>
-				<Markdown content={`\`\`\`\ncode block\n\`\`\``} />
+				<Markdown text={`\`\`\`\ncode block\n\`\`\``} />
 
 				<h3>Blockquotes</h3>
 				<p>
@@ -166,7 +166,7 @@
 				</p>
 				<Code content="> This is a blockquote" />
 				<p>renders as:</p>
-				<Markdown content="> This is a blockquote" />
+				<Markdown text="> This is a blockquote" />
 
 				<h3>Lists</h3>
 				<p>
@@ -174,7 +174,7 @@
 				</p>
 				<Code content="- Item 1\n- Item 2\n- Item 3" />
 				<p>renders as:</p>
-				<Markdown content="- Item 1\n- Item 2\n- Item 3" />
+				<Markdown text="- Item 1\n- Item 2\n- Item 3" />
 
 				<h3>HTML Elements and Svelte Components</h3>
 				<p>
@@ -183,11 +183,11 @@
 				</p>
 				<Code content="<div>HTML content</div>" />
 				<p>renders as:</p>
-				<Markdown content="<div>HTML content</div>" />
+				<Markdown text="<div>HTML content</div>" />
 
 				<Code content="<Component>Component content</Component>" />
 				<p>renders as:</p>
-				<Markdown content="<Component>Component content</Component>" />
+				<Markdown text="<Component>Component content</Component>" />
 
 				<h3>Expressions</h3>
 				<p>
@@ -195,7 +195,7 @@
 				</p>
 				<Code content={'{expression}'} />
 				<p>renders as:</p>
-				<Markdown content={'{expression}'} />
+				<Markdown text={'{expression}'} />
 			</div>
 		</section>
 

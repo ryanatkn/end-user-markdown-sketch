@@ -5,19 +5,19 @@
 	import Markdown from '$lib/Markdown.svelte';
 
 	interface Props {
-		content: string;
+		text: string;
 		after?: Snippet;
 		children?: Snippet;
 	}
 
-	const {content, after, children}: Props = $props();
+	const {text: content, after, children}: Props = $props();
 </script>
 
 <div class="markdown_text_example panel">
 	{@render children?.()}
 	<Code {content} />
 	<p>
-		<Markdown {content} />
+		<Markdown text={content} />
 	</p>
 	{@render after?.()}
 </div>

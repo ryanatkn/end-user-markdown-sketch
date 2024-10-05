@@ -181,7 +181,7 @@ Array.from({length: 5}, (_, i) => i + 1):
 						</div>
 						<div class="markdown-output">
 							<h3>Rendered Output</h3>
-							<Markdown content={section.content} />
+							<Markdown text={section.content} />
 						</div>
 					</div>
 				</div>

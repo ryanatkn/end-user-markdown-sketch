@@ -2,6 +2,14 @@
 	import {base} from '$app/paths';
 	import 'prismjs'; // TODO shouldn't be needed
 	import Code from '@ryanatkn/fuz_code/Code.svelte';
+	import {parse} from 'svelte/compiler';
+
+	console.log(`Svelte parse`, parse);
+	window.parse = parse;
+	console.log(
+		'Svelte parse(`<Markdown text="hey @you *lol*" />`)',
+		parse(`<Markdown text="hey @you *lol*" />`, {filename: 'testing.md', modern: true}),
+	);
 
 	import Markdown_Playground from '$lib/Markdown_Playground.svelte';
 	import Markdown from '$lib/Markdown.svelte';
@@ -19,8 +27,8 @@
 				<h2 id="motivation">Motivation</h2>
 				<p>
 					Many social websites provide rich text features to end-users like
-					<Markdown content="*bold* text and @mentions and #hashtags" />. Markdown is the common
-					name for this markup, although the specifics differ:
+					<Markdown text="*bold* text and @mentions and #hashtags" />. Markdown is the common name
+					for this markup, although the specifics differ:
 				</p>
 				<ul>
 					<li>
@@ -112,9 +120,9 @@
 				<Markdown_Playground />
 				<div>
 					<aside>
-						tip: try opening the contextmenu on <Markdown content="@fox" /> and <Markdown
-							content="@dog"
-						/> and the other <Markdown content="@mentions and #hashtags" />
+						tip: try opening the contextmenu on <Markdown text="@fox" /> and <Markdown
+							text="@dog"
+						/> and the other <Markdown text="@mentions and #hashtags" />
 					</aside>
 				</div>
 			</div>
@@ -175,8 +183,8 @@
 						<code>content</code> prop:
 					</p>
 					<blockquote>
-						<Code content={`<Markdown content="hey @you" />`} />
-						<div><Markdown content="hey @you" /></div>
+						<Code content={`<Markdown text="hey @you" />`} />
+						<div><Markdown text="hey @you" /></div>
 					</blockquote>
 					<p>
 						The <code>Markdown</code> component internally calls
@@ -214,9 +222,9 @@
 			</section>
 			<section class="section_lg">
 				<h3 id="html-tags">HTML tags</h3>
-				<Markdown_Example content={`<aside>example HTML tag</aside>`} />
+				<Markdown_Example text={`<aside>example HTML tag</aside>`} />
 				<Markdown_Example
-					content={`<aside>\n\t<blockquote>\n\t\t<aside>example nesting</aside>\n\t\t<details><summary>example summary</summary>hidden details</details>\n\t</blockquote>\n</aside>`}
+					text={`<aside>\n\t<blockquote>\n\t\t<aside>example nesting</aside>\n\t\t<details><summary>example summary</summary>hidden details</details>\n\t</blockquote>\n</aside>`}
 				/>
 			</section>
 			<section class="section_lg">
@@ -239,20 +247,20 @@
 					<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">Content Security Policy</a
 					>.
 				</p>
-				<Markdown_Example content={`with class:\n<span class="chip">.chip</span>`}>
+				<Markdown_Example text={`with class:\n<span class="chip">.chip</span>`}>
 					<p>
 						Element classes are a powerful and safe way for end-users to access the app's styles:
 					</p>
 				</Markdown_Example>
 				<Markdown_Example
-					content={`safe attributes work:\n<img\n\tsrc="${base}/favicon.png"\n\talt="a little yellow spider"\n\ttitle="this site's favicon"\n\twidth="128"\n\theight="128"\n\tclass="pixelated"\n/>`}
+					text={`safe attributes work:\n<img\n\tsrc="${base}/favicon.png"\n\talt="a little yellow spider"\n\ttitle="this site's favicon"\n\twidth="128"\n\theight="128"\n\tclass="pixelated"\n/>`}
 				/>
 			</section>
 			<section class="section_lg">
 				<h3 id="syntax-sugar">Syntax sugar</h3>
-				<Markdown_Example content={`*asterisks* are replaced with a <code>strong</code> tag`} />
-				<Markdown_Example content={`_underscores_ are replaced with an <code>em</code> tag`} />
-				<Markdown_Example content={`\`backticks\` are replaced with a <code>code</code> tag`} />
+				<Markdown_Example text={`*asterisks* are replaced with a <code>strong</code> tag`} />
+				<Markdown_Example text={`_underscores_ are replaced with an <code>em</code> tag`} />
+				<Markdown_Example text={`\`backticks\` are replaced with a <code>code</code> tag`} />
 				<details>
 					<summary>TODO</summary>
 					<ul>
@@ -261,8 +269,8 @@
 						<li>lists, using <code>- this</code> not also <code>* that</code></li>
 						<li><code>```code blocks```</code> with syntax highlighting</li>
 						<li>
-							resolve backtick-wrapped <Markdown content="`known_identifiers`" /> to a system-defined
-							namespace, like an app's vocabulary for contextmenu and other widgety behaviors
+							resolve backtick-wrapped <Markdown text="`known_identifiers`" /> to a system-defined namespace,
+							like an app's vocabulary for contextmenu and other widgety behaviors
 						</li>
 						<li>extensibility</li>
 					</ul>
@@ -271,7 +279,7 @@
 			<section class="section_lg">
 				<h3 id="links">Links</h3>
 				<Markdown_Example
-					content={`/root link to the current base (like GitHub's flavor, not necessarily absolute to the host!)`}
+					text={`/root link to the current base (like GitHub's flavor, not necessarily absolute to the host!)`}
 				/>
 				<p>
 					<code>/path</code> is a shorthand for <Code
@@ -280,7 +288,7 @@
 					/>
 				</p>
 				<Markdown_Example
-					content={`network link to <code>https:</code> - //github.com/ryanatkn/end-user-markdown-sketch`}
+					text={`network link to <code>https:</code> - //github.com/ryanatkn/end-user-markdown-sketch`}
 				/>
 				<p>
 					<code>//path</code> is a shorthand for <Code
@@ -295,7 +303,7 @@
 			</section>
 			<section class="section_lg">
 				<h3 id="mentions">Mentions</h3>
-				<Markdown_Example content={`@username mentions have contextmenus`} />
+				<Markdown_Example text={`@username mentions have contextmenus`} />
 				<p>
 					The <code>@</code> is a shorthand for <Code
 						inline
@@ -309,7 +317,7 @@
 			</section>
 			<section class="section_lg">
 				<h3 id="hashtag">Hashtags</h3>
-				<Markdown_Example content={`#hashtags have contextmenus`} />
+				<Markdown_Example text={`#hashtags have contextmenus`} />
 				<p>
 					The <code>#</code> is a shorthand for <Code
 						inline
@@ -342,12 +350,10 @@
 						</li>
 					{/each}
 				</ul>
-				<Markdown_Example
-					content={`<Link href="/route">this Link</Link> does the same as /route`}
-				/>
-				<Markdown_Example content={`mentioning <Mention name="username" /> the long way`} />
-				<Markdown_Example content={`<Hashtag name="this" /> is equivalent to #this`} />
-				<Markdown_Example content={`<Missing /> components are called out`}>
+				<Markdown_Example text={`<Link href="/route">this Link</Link> does the same as /route`} />
+				<Markdown_Example text={`mentioning <Mention name="username" /> the long way`} />
+				<Markdown_Example text={`<Hashtag name="this" /> is equivalent to #this`} />
+				<Markdown_Example text={`<Missing /> components are called out`}>
 					<p>If a component isn't found, it renders a fallback that preserves the source text:</p>
 					{#snippet after()}
 						<p>
