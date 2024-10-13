@@ -91,7 +91,8 @@
 					<li>
 						dev-friendly - renderers like the main HTML/Svelte one may ignore some whitespace but
 						parsing+printing any text reproduces it character-for-character, so it's stable to edit
-						as data and formatting isn't a thing
+						as data and formatting is off by default, but you can add things like automatic trailing
+						whitespace trimming to your UI, if you want
 					</li>
 				</ul>
 			</section>
