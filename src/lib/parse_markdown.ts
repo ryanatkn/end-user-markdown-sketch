@@ -1,24 +1,12 @@
 /*
+
 parse_markdown.ts
 
 Parser for a custom language that extends
 Svelte and HTML with some Markdown and Markdown-like features.
 
-## Features
-
-- bold text is implemented with *single asterisks* -
-    double asterisks like **this** are plain text
-- italics are implemented with _single underscores_ -
-    like with asterisks, double underscores like __this__ are plain text
-- prefixes are supported like @mentions and #hashtags and /absolute_links and //global_links
-- Windows is ignored, so carriage returns like `\r\n` are not used, only `\n`
-
-## Style guide
-
-Notice the code style uses `#`-prefixed identifiers for private methods and properties.
-It does NOT use the TypeScript `private` prefix, nor should it -
-generated code MUST use the `#` prefix and NOT the `private` keyword.
-All identifiers use `snake_case` including `Title_Snakes` for type and class names.
+This was mostly written by ChatGPT o1-mini and Claude 3.5 Sonnet.
+It's slop.
 
 */
 
