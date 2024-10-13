@@ -1,1 +1,0 @@
-import{h as r,d as c,g as i,i as s,j as h,k as d}from"./runtime.C8xWL2y2.js";function m(t,f,o){r&&c();var n=t,a,e;i(()=>{a!==(a=f())&&(e&&(d(e),e=null),a&&(e=s(()=>o(n,a))))}),r&&(n=h)}export{m as c};
