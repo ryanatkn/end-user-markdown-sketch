@@ -3,12 +3,12 @@
 	import {parse_markdown} from '$lib/parse_markdown.js';
 
 	interface Props {
-		content: string;
+		text: string;
 	}
 
-	const {content}: Props = $props();
+	const {text}: Props = $props();
 
-	const nodes = $derived(parse_markdown(content)); // TODO caching (with eviction in `update_space`/`delete_space`/etc)
+	const nodes = $derived(parse_markdown(text)); // TODO caching (with eviction in `update_space`/`delete_space`/etc)
 </script>
 
 {#each nodes as view (view)}
