@@ -2,7 +2,7 @@
 
 import {plural} from '@ryanatkn/belt/string.js';
 
-// TODO misses a lot of cases, need a regexp or proper parsing
+// TODO is a hack and misses a lot of cases, need a regexp or proper parsing
 export const is_path_valid = (p: string): boolean => {
 	const parts = p.split('/').filter(Boolean);
 	if (!parts.length) return false;
@@ -21,6 +21,8 @@ export const is_network_relative_path_valid = (_p: string): boolean => true; // 
 
 export const is_host_relative_path = (p: string): boolean => p[0] === '/' && p[1] !== '/';
 export const is_host_relative_path_valid = is_path_valid;
+
+export const is_path_relative_path = (p: string): boolean => p[0] === '.';
 
 /**
  * Same restrictions as Mastodon.

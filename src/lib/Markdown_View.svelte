@@ -7,6 +7,7 @@
 	import Markdown_View from '$lib/Markdown_View.svelte';
 	import Mention from '$routes/Mention.svelte';
 	import Hashtag from '$routes/Hashtag.svelte';
+	import Link from '$routes/Link.svelte';
 
 	interface Props {
 		view: Parsed_Node; // TODO rename to `node`?
@@ -64,13 +65,13 @@
 {:else if view.type === 'Hashtag'}
 	<Hashtag name={view.name} />
 {:else if view.type === 'Absolute_Link'}
-	<a href={view.href}>{view.href}</a>
+	<Link href={view.href}>{view.href}</Link>
 {:else if view.type === 'Global_Link'}
-	<a href={view.href}>{view.href}</a>
+	<Link href={view.href}>{view.href}</Link>
+{:else if view.type === 'Markdown_Link'}
+	<Link href={view.href}>{@render child_nodes(view.text)}</Link>
 {:else if view.type === 'Expression'}
 	{view.content}
-{:else if view.type === 'Markdown_Link'}
-	<a href={view.href}>{@render child_nodes(view.text)}</a>
 {:else if view.type === 'Blockquote'}
 	<blockquote>{@render child_nodes(view.children)}</blockquote>
 {:else if view.type === 'List'}

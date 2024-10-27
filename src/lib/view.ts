@@ -6,7 +6,7 @@ import type {Parsed_Node} from '$lib/parse_markdown.js';
 
 export type View_Node = Parsed_Node; // TODO root type?
 
-export type MarkdownComponents = Record<string, Component<any>>;
+export type Markdown_Components = Record<string, Component<any>>;
 
 export const ALLOWED_HTML_ATTRS = new Set([
 	'class',

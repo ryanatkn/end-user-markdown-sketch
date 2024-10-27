@@ -6,6 +6,7 @@
 	const INITIAL_VALUE =
 		'*bold* _italics_ `code`\n\n' +
 		'#hashtag and @mention\n\n' +
+		'[markdown link](./markdown-link)\n\n' +
 		'/root/link\n\n' +
 		'network link - //github.com/ryanatkn/end-user-markdown-sketch\n\n' +
 		'<aside>basic safe <a href="https://wikipedia.org/wiki/HTML">html</a> works</aside>\n\n' +
