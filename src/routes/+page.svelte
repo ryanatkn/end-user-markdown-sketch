@@ -79,9 +79,9 @@
 						configuration, using a set of supported syntaxes for cases like @mentions and ~whatever~
 					</li>
 					<li>
-						powerful - renders HTML, *markdownisms*, and Svelte components with props and
-						composition (no JS/expressions yet but could eventually support all/most of Svelte I
-						think?)
+						powerful - renders HTML, *markdownisms*, and a limited form of Svelte components with
+						props and composition (no JS/expressions yet but could eventually support all/most of
+						Svelte I think?)
 					</li>
 					<li>
 						user-friendly - the default configuration and main Svelte renderer behave more like the

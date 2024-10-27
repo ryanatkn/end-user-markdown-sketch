@@ -7,8 +7,3 @@ The website explains things with demos:
 
 [The parser](/src/lib/parse_markdown.ts) was mostly written by ChatGPT o1-mini and Claude 3.5 Sonnet.
 It's slop.
-
-TODO
-
-- relative links
-- more tests

@@ -43,12 +43,13 @@ test('parses absolute links, relative to the current root /', () => {
 // TODO add this feature
 // test('parses relative links, relative to the current path /', () => {
 // 	assert.equal(parse_markdown('./relative/link\n\n'), [
-// 		{type: 'Absolute_Link', href: './relative/link', start: 0, end: 10},
+// 		{type: 'Relative_Link', href: './relative/link', start: 0, end: 10},
 // 		{type: 'Text', content: '\n\n', start: 10, end: 12},
 // 	]);
 // });
 
-test('parses a link at the https: network level', () => {
+// TODO terminology - network or global? I think I chose "network" for "network-relative" consistency with other kinds
+test('parses a `//`-prefixed link at the network level', () => {
 	assert.equal(
 		parse_markdown('network link - //github.com/ryanatkn/end-user-markdown-sketch\n\n'),
 		[
@@ -62,6 +63,65 @@ test('parses a link at the https: network level', () => {
 			{type: 'Text', content: '\n\n', start: 61, end: 63},
 		],
 	);
+});
+
+test('parses an `https://`-prefixed link at the network level', () => {
+	assert.equal(
+		parse_markdown(
+			'literal network link - https://github.com/ryanatkn/end-user-markdown-sketch\n\n',
+		),
+		[
+			{
+				type: 'Text',
+				content: 'literal network link - ',
+				start: 0,
+				end: 23,
+			},
+			{
+				type: 'Global_Link',
+				href: 'https://github.com/ryanatkn/end-user-markdown-sketch',
+				start: 23,
+				end: 75,
+			},
+			{type: 'Text', content: '\n\n', start: 75, end: 77},
+		],
+	);
+});
+
+test('parses an `http://`-prefixed link at the network level', () => {
+	assert.equal(
+		parse_markdown(
+			'literal network link - http://github.com/ryanatkn/end-user-markdown-sketch\n\n',
+		),
+		[
+			{
+				type: 'Text',
+				content: 'literal network link - ',
+				start: 0,
+				end: 23,
+			},
+			{
+				type: 'Global_Link',
+				href: 'http://github.com/ryanatkn/end-user-markdown-sketch',
+				start: 23,
+				end: 74,
+			},
+			{type: 'Text', content: '\n\n', start: 74, end: 76},
+		],
+	);
+});
+
+test('parses markdown links', () => {
+	assert.equal(parse_markdown('[markdown link](/root/link)\n\n'), [
+		{
+			type: 'Markdown_Link',
+			text: [{type: 'Text', content: 'markdown link', start: 1, end: 14}],
+			href: '/root/link',
+			start: 0,
+			end: 27,
+		},
+		{type: 'Text', content: '\n\n', start: 27, end: 29},
+	]);
 });
 
 test('parses an aside element with an anchor link', () => {

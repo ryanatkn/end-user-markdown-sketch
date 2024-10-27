@@ -2,8 +2,9 @@
 
 parse_markdown.ts
 
-Parser for a custom language that extends
-Svelte and HTML with some Markdown and Markdown-like features.
+This is a parser for a custom language that extends
+HTML with some Markdown and Markdown-like features,
+including a limited form of Svelte components.
 
 This was mostly written by ChatGPT o1-mini and Claude 3.5 Sonnet.
 It's slop.
