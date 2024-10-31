@@ -35,10 +35,9 @@
 	);
 	const external = $derived(!(host_relative || path_relative));
 	const rel = $derived(external ? 'external noreferrer nofollow' : undefined); // TODO make configurable, maybe change default?
-	const target = $derived(external ? '_blank' : undefined); // TODO make configurable, maybe change default?
 	// TODO this no longer works: `sveltekit:prefetch={prefetch}`, see https://github.com/sveltejs/kit/pull/7776
 	// $: prefetch = external ? undefined : (true as const);
 </script>
 
-{#if valid}<a {...attrs} href={final_href} {rel} {target}>{@render children()}</a
+{#if valid}<a {...attrs} href={final_href} {rel}>{@render children()}</a
 	>{:else}{@render children()}{/if}

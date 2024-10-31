@@ -40,13 +40,12 @@ test('parses absolute links, relative to the current root /', () => {
 	]);
 });
 
-// TODO add this feature
-// test('parses relative links, relative to the current path /', () => {
-// 	assert.equal(parse_markdown('./relative/link\n\n'), [
-// 		{type: 'Relative_Link', href: './relative/link', start: 0, end: 10},
-// 		{type: 'Text', content: '\n\n', start: 10, end: 12},
-// 	]);
-// });
+test('parses relative links, relative to the current path /', () => {
+	assert.equal(parse_markdown('./relative/link\n\n'), [
+		{type: 'Relative_Link', href: './relative/link', start: 0, end: 15},
+		{type: 'Text', content: '\n\n', start: 15, end: 17},
+	]);
+});
 
 // TODO terminology - network or global? I think I chose "network" for "network-relative" consistency with other kinds
 test('parses a `//`-prefixed link at the network level', () => {

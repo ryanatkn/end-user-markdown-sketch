@@ -45,6 +45,10 @@
 {:else if view.type === 'Element'}
 	{#if view.self_closing}
 		<svelte:element this={view.name} {...node_props} />
+	{:else if view.name === 'a'}
+		<Link href={node_props?.href} attrs={node_props}>
+			{@render child_nodes(view.children)}
+		</Link>
 	{:else}
 		<svelte:element this={view.name} {...node_props}>
 			{@render child_nodes(view.children)}
@@ -64,9 +68,7 @@
 	<Mention name={view.name} />
 {:else if view.type === 'Hashtag'}
 	<Hashtag name={view.name} />
-{:else if view.type === 'Absolute_Link'}
-	<Link href={view.href}>{view.href}</Link>
-{:else if view.type === 'Global_Link'}
+{:else if view.type === 'Absolute_Link' || view.type === 'Relative_Link' || view.type === 'Global_Link'}
 	<Link href={view.href}>{view.href}</Link>
 {:else if view.type === 'Markdown_Link'}
 	<Link href={view.href}>{@render child_nodes(view.text)}</Link>

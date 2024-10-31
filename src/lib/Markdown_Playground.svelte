@@ -8,6 +8,7 @@
 		'#hashtag and @mention\n\n' +
 		'[markdown link](./markdown-link)\n\n' +
 		'/root/link\n\n' +
+		'./relative/link\n\n' +
 		'network link - //github.com/ryanatkn/end-user-markdown-sketch\n\n' +
 		'<aside>basic safe <a href="https://wikipedia.org/wiki/HTML">html</a> works</aside>\n\n' +
 		'<span class="chip success">class</span> is allowed but <span class="chip" style="color: red">style</span> and most other attributes are not yet - it should support a safe and configurable subset of HTML, not every usecase has the same needs\n\n' +

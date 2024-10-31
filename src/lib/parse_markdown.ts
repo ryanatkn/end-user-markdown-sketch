@@ -21,6 +21,7 @@ export type Parsed_Node =
 	| Mention_Node
 	| Hashtag_Node
 	| Absolute_Link_Node
+	| Relative_Link_Node
 	| Global_Link_Node
 	| Element_Node
 	| Component_Node
@@ -74,6 +75,11 @@ export interface Hashtag_Node extends Base_Node {
 
 export interface Absolute_Link_Node extends Base_Node {
 	type: 'Absolute_Link';
+	href: string;
+}
+
+export interface Relative_Link_Node extends Base_Node {
+	type: 'Relative_Link';
 	href: string;
 }
 
@@ -208,6 +214,8 @@ export class Parser {
 			return this.#parse_global_link();
 		} else if (this.#match('/')) {
 			return this.#parse_absolute_link();
+		} else if (this.#match('./')) {
+			return this.#parse_relative_link();
 		} else if (this.#match('<')) {
 			return this.#parse_element_or_component();
 		} else if (this.#match('{')) {
@@ -299,6 +307,7 @@ export class Parser {
 				this.template.startsWith('http://', this.#index) ||
 				this.template.startsWith('https://', this.#index) ||
 				this.template.startsWith('//', this.#index) ||
+				this.template.startsWith('./', this.#index) ||
 				c === '/'
 			) {
 				break;
@@ -593,6 +602,18 @@ export class Parser {
 			this.#eat('/');
 			const href = '/' + this.#read_until((c) => /[\s,<>]/.test(c));
 			return {type: 'Absolute_Link', href, start, end: this.#index};
+		} else {
+			const content = this.template[this.#index];
+			this.#index++;
+			return {type: 'Text', content, start, end: this.#index};
+		}
+	}
+
+	#parse_relative_link(): Relative_Link_Node | Text_Node {
+		const start = this.#index;
+		if (this.#match('./')) {
+			const href = this.#read_until((c) => /[\s,<>]/.test(c));
+			return {type: 'Relative_Link', href, start, end: this.#index};
 		} else {
 			const content = this.template[this.#index];
 			this.#index++;
