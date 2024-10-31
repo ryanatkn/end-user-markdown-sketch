@@ -2,25 +2,15 @@
 
 import {plural} from '@ryanatkn/belt/string.js';
 
-// TODO is a hack and misses a lot of cases, need a regexp or proper parsing
-export const is_path_valid = (p: string): boolean => {
-	const parts = p.split('/').filter(Boolean);
-	if (!parts.length) return false;
-	for (const part of parts) {
-		if (!ACTOR_NAME_CHARACTER_MATCHER.test(part)) return false;
-	}
-	return true;
-};
-
 export const is_network_relative_path = (p: string): boolean => {
 	if (p[0] !== '/' || p[1] !== '/') return false;
 	const p2 = p[2];
 	return !!p2 && p2 !== '/';
 };
-export const is_network_relative_path_valid = (_p: string): boolean => true; // TODO hmm - any chars? escaping?
+export const is_network_relative_path_valid = (_p: string): boolean => true; // TODO @many check correctly - using `new URL(p)`?
 
 export const is_host_relative_path = (p: string): boolean => p[0] === '/' && p[1] !== '/';
-export const is_host_relative_path_valid = is_path_valid;
+export const is_host_relative_path_valid = (_p: string): boolean => true; // TODO @many check correctly - using `new URL(p)`?
 
 export const is_path_relative_path = (p: string): boolean => p[0] === '.';
 

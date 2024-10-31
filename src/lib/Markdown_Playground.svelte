@@ -10,7 +10,7 @@
 		'/root/link\n\n' +
 		'./relative/link\n\n' +
 		'network link - //github.com/ryanatkn/end-user-markdown-sketch\n\n' +
-		'<aside>basic safe <a href="https://wikipedia.org/wiki/HTML">html</a> works</aside>\n\n' +
+		'<aside>basic safe <a href="https://wikipedia.org/wiki/HTML">html</a> works, and <a href="/root/links">root links</a> and <a href="./relative/links">relative links</a> are prefixed with the <a href="https://svelte.dev/docs/kit/$app-paths#base"><code>base</code> path</a></aside>\n\n' +
 		'<span class="chip success">class</span> is allowed but <span class="chip" style="color: red">style</span> and most other attributes are not yet - it should support a safe and configurable subset of HTML, not every usecase has the same needs\n\n' +
 		'<button onclick="alert(\'hax\')" title="this button tries to hack you with the onclick attribute but the attribute allowlist disallows it">onclick does not work</button>';
 
