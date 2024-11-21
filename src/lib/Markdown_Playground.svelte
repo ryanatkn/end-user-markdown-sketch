@@ -27,7 +27,7 @@
 	<textarea bind:value></textarea>
 	<div class="preview">
 		<!-- TODO is super hacky, remove the loop when the parser is fixed -->
-		{#each contents as content}<div class="spaced"><Markdown {content} /></div>{/each}
+		{#each contents as content}<div class="spaced"><Markdown text={content} /></div>{/each}
 	</div>
 </div>
 
